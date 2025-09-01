@@ -1,4 +1,6 @@
-﻿namespace OnlineShopping_MVC.Models.Domain;
+﻿using System.Collections.Generic;
+
+namespace OnlineShopping_MVC.Models.Domain;
 
 public class SubCategory : BaseEntity
 {
