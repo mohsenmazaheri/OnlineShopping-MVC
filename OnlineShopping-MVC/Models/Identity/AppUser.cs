@@ -1,6 +1,8 @@
-﻿namespace OnlineShopping_MVC.Models.Identity
+﻿using Microsoft.AspNetCore.Identity;
+
+namespace OnlineShopping_MVC.Models.Identity;
+
+public class AppUser : IdentityUser
 {
-    public class AppUser
-    {
-    }
+    public string? DisplayName { get; set; }
 }
