@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using OnlineShop.Application.Common;
+using OnlineShop.Domain.Accounts;
 using OnlineShop.Domain.Catalog;
 using OnlineShop.Domain.Common;
 using OnlineShop.Domain.Sales;
@@ -31,6 +32,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<CartItem> CartItems => Set<CartItem>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<PhoneVerificationCode> PhoneVerificationCodes => Set<PhoneVerificationCode>();
 
     /// <summary>ASP.NET Core Data Protection keys, shared by all app instances (cookies, antiforgery tokens).</summary>
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
@@ -49,6 +51,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         ConfigureCatalog(builder);
         ConfigureCart(builder);
         ConfigureOrders(builder);
+        ConfigurePhoneCodes(builder);
         ApplySoftDeleteQueryFilters(builder);
     }
 
@@ -156,6 +159,20 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 .WithMany()
                 .HasForeignKey(i => i.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+    }
+
+    private static void ConfigurePhoneCodes(ModelBuilder b)
+    {
+        b.Entity<PhoneVerificationCode>(e =>
+        {
+            e.Property(c => c.PhoneNumber).HasMaxLength(20);
+            e.Property(c => c.Purpose).HasConversion<string>().HasMaxLength(16);
+            e.Property(c => c.UserId).HasMaxLength(450);
+            e.Property(c => c.CodeHash).HasMaxLength(64);
+            e.Property(c => c.Salt).HasMaxLength(32);
+            // Every lookup is "latest codes for this number".
+            e.HasIndex(c => new { c.PhoneNumber, c.Purpose, c.CreatedUtc });
         });
     }
 

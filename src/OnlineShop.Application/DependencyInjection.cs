@@ -25,6 +25,11 @@ public static class DependencyInjection
         services.AddScoped<ICategoryQueries, CategoryQueries>();
         services.AddScoped<LoginIdentifierParser>();
         services.AddScoped<AccountService>();
+        services.AddScoped<PhoneCodeService>();
+        services.AddOptions<PhoneCodeOptions>()
+            .Bind(configuration.GetSection(PhoneCodeOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
         // Replaced when an SMS provider is configured (phase 2b).
         services.TryAddSingleton<ISmsCapability, NoSmsCapability>();

@@ -53,6 +53,17 @@ services:
       Email__SmtpPort: ${SMTP_PORT:-587}
       Email__SmtpUser: ${SMTP_USER:-}
       Email__SmtpPassword: ${SMTP_PASSWORD:-}
+      # SMS (optional): None | Kavenegar | SmsIr | Twilio
+      Sms__Provider: ${SMS_PROVIDER:-None}
+      Sms__Kavenegar__ApiKey: ${KAVENEGAR_API_KEY:-}
+      Sms__Kavenegar__VerifyTemplate: ${KAVENEGAR_VERIFY_TEMPLATE:-}
+      Sms__SmsIr__ApiKey: ${SMSIR_API_KEY:-}
+      Sms__SmsIr__VerifyTemplateId: ${SMSIR_VERIFY_TEMPLATE_ID:-0}
+      Sms__SmsIr__CodeParameterName: ${SMSIR_CODE_PARAMETER:-Code}
+      Sms__Twilio__AccountSid: ${TWILIO_ACCOUNT_SID:-}
+      Sms__Twilio__AuthToken: ${TWILIO_AUTH_TOKEN:-}
+      Sms__Twilio__From: ${TWILIO_FROM:-}
+      Sms__Twilio__MessagingServiceSid: ${TWILIO_MESSAGING_SERVICE_SID:-}
       # The API is reachable only from the web container on this private network, so it may trust
       # X-Forwarded-For; otherwise every visitor would share the web container's rate-limit bucket.
       ReverseProxy__TrustForwardedHeadersFromAnyHost: "true"

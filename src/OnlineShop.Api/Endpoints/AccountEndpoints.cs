@@ -49,7 +49,9 @@ public static class AccountEndpoints
             .Produces<CurrentUser>()
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
-        group.MapPost("/confirm-email", async (ConfirmEmailRequest request, AccountService accounts) =>
+        MapPhoneEndpoints(group);
+
+        group.MapPost("/confirm-email",async (ConfirmEmailRequest request, AccountService accounts) =>
                 (await accounts.ConfirmEmailAsync(request)).ToHttpResult())
             .Validate<ConfirmEmailRequest>()
             .RequireRateLimiting(AuthRateLimitPolicy)
@@ -82,5 +84,44 @@ public static class AccountEndpoints
             .WithSummary("Set a new password with the token from the reset email; signs out all other sessions.");
 
         return app;
+    }
+
+    /// <summary>Sign-in with SMS codes (creates the account for a new number) and adding a verified phone.</summary>
+    private static void MapPhoneEndpoints(RouteGroupBuilder group)
+    {
+        group.MapPost("/phone/send-code", async (SendPhoneCodeRequest request, AccountService accounts, CancellationToken ct) =>
+                (await accounts.SendSignInCodeAsync(request, ct)).ToHttpResult())
+            .Validate<SendPhoneCodeRequest>()
+            .RequireRateLimiting(AuthRateLimitPolicy)
+            .WithName("SendPhoneSignInCode")
+            .WithSummary("Text a one-time sign-in code to a mobile number (same answer whether or not it has an account).")
+            .Produces<PhoneCodeSent>()
+            .ProducesProblem(StatusCodes.Status429TooManyRequests);
+
+        group.MapPost("/phone/sign-in", async (PhoneSignInRequest request, AccountService accounts, CancellationToken ct) =>
+                (await accounts.SignInWithCodeAsync(request, ct)).ToHttpResult())
+            .Validate<PhoneSignInRequest>()
+            .RequireRateLimiting(AuthRateLimitPolicy)
+            .WithName("PhoneSignIn")
+            .WithSummary("Sign in with the SMS code; a new number gets a customer account.")
+            .Produces<PhoneSignInResult>();
+
+        group.MapPost("/phone/add/send-code", async (SendPhoneCodeRequest request, ClaimsPrincipal user, AccountService accounts, CancellationToken ct) =>
+                (await accounts.SendAddPhoneCodeAsync(user.GetUserId(), request, ct)).ToHttpResult())
+            .Validate<SendPhoneCodeRequest>()
+            .RequireAuthorization()
+            .RequireRateLimiting(AuthRateLimitPolicy)
+            .WithName("SendAddPhoneCode")
+            .WithSummary("Text a code to a number the signed-in user wants to add.")
+            .Produces<PhoneCodeSent>();
+
+        group.MapPost("/phone/add/confirm", async (ConfirmPhoneRequest request, ClaimsPrincipal user, AccountService accounts, CancellationToken ct) =>
+                (await accounts.ConfirmAddPhoneAsync(user.GetUserId(), request, ct)).ToHttpResult())
+            .Validate<ConfirmPhoneRequest>()
+            .RequireAuthorization()
+            .RequireRateLimiting(AuthRateLimitPolicy)
+            .WithName("ConfirmAddPhone")
+            .WithSummary("Save the number as the user's verified phone with the SMS code.")
+            .Produces<CurrentUser>();
     }
 }

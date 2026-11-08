@@ -1,11 +1,12 @@
 using Microsoft.Extensions.Options;
 using OnlineShop.Application.Common;
 using OnlineShop.Application.Notifications;
+using OnlineShop.Domain.Accounts;
 
 namespace OnlineShop.Application.Accounts;
 
 /// <summary>
-/// Customer account use cases: register, sign in/out, confirm email, reset password.
+/// Customer account use cases: register, sign in/out (password or SMS code), confirm email and phone, reset password.
 /// Request shapes are validated before this service runs (FluentValidation endpoint filter);
 /// this class enforces business rules: enabled sign-in methods, uniqueness, and no account enumeration.
 /// </summary>
@@ -13,49 +14,117 @@ public sealed class AccountService(
     IAccountIdentity identity,
     LoginIdentifierParser identifierParser,
     IPhoneNumberNormalizer phoneNormalizer,
+    PhoneCodeService phoneCodes,
     IEmailSender emailSender,
-    ISmsCapability sms,
     IOptions<StoreOptions> storeOptions,
     IOptions<AuthOptions> authOptions)
 {
     private readonly StoreOptions _store = storeOptions.Value;
     private readonly AuthOptions _auth = authOptions.Value;
 
+    /// <summary>Password sign-up with an email address.</summary>
     public async Task<Result<CurrentUser>> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
-        string? phone = null;
-
-        if (email is not null && !_auth.EmailSignUp)
+        if (!_auth.EmailSignUp)
             return AppError.Validation(AccountErrors.EmailSignUpDisabled, "Sign-up with email is not available.");
 
-        if (!string.IsNullOrWhiteSpace(request.Phone))
-        {
-            if (!_auth.PhoneSignUp || !sms.IsEnabled)
-                return AppError.Validation(AccountErrors.PhoneSignUpDisabled, "Sign-up with a mobile number is not available.");
-            phone = phoneNormalizer.Normalize(request.Phone, _store.PhoneRegion);
-            if (phone is null)
-                return AppError.Validation(AccountErrors.PhoneInvalid, "The mobile number is not valid.");
-        }
-
-        if (email is not null && await identity.EmailInUseAsync(email, cancellationToken))
+        var email = request.Email!.Trim();
+        if (await identity.EmailInUseAsync(email, cancellationToken))
             return AppError.Conflict(AccountErrors.EmailTaken, "An account with this email already exists.");
-        if (phone is not null && await identity.PhoneInUseAsync(phone, cancellationToken))
-            return AppError.Conflict(AccountErrors.PhoneTaken, "An account with this mobile number already exists.");
 
         var locale = ResolveLocale(request.Locale);
-        var created = await identity.CreateCustomerAsync(email, phone, request.Password, request.DisplayName?.Trim(), locale, cancellationToken);
+        var created = await identity.CreateCustomerAsync(email, null, request.Password, request.DisplayName?.Trim(), locale, cancellationToken);
         if (!created.Succeeded)
             return MapCreateErrors(created.ErrorCodes);
 
         var userId = created.UserId!;
-        if (email is not null)
-            await SendConfirmationAsync(userId, email, locale, cancellationToken);
-
+        await SendConfirmationAsync(userId, email, locale, cancellationToken);
         await identity.SignInAsync(userId, rememberMe: false);
         return await CurrentUserOrNotFound(userId);
+    }
+
+    /// <summary>
+    /// Sends a sign-in code. The answer is the same whether or not the number has an account
+    /// (the account is created on first sign-in), so it reveals nothing.
+    /// </summary>
+    public async Task<Result<PhoneCodeSent>> SendSignInCodeAsync(SendPhoneCodeRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var phone = phoneNormalizer.Normalize(request.Phone, _store.PhoneRegion);
+        if (phone is null)
+            return AppError.Validation(AccountErrors.PhoneInvalid, "The mobile number is not valid.");
+        return await phoneCodes.SendAsync(phone, PhoneCodePurpose.SignIn, null, ResolveLocale(request.Locale), cancellationToken);
+    }
+
+    /// <summary>Signs in with an SMS code; creates a (verified) customer account when the number is new.</summary>
+    public async Task<Result<PhoneSignInResult>> SignInWithCodeAsync(PhoneSignInRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var phone = phoneNormalizer.Normalize(request.Phone, _store.PhoneRegion);
+        if (phone is null)
+            return AppError.Validation(AccountErrors.PhoneInvalid, "The mobile number is not valid.");
+
+        var verified = await phoneCodes.VerifyAsync(phone, PhoneCodePurpose.SignIn, null, request.Code, cancellationToken);
+        if (!verified.IsSuccess)
+            return verified.Error!;
+
+        var userId = await identity.FindUserIdByPhoneAsync(phone, cancellationToken);
+        var isNew = userId is null;
+        if (isNew)
+        {
+            if (!_auth.PhoneSignUp)
+                return AppError.Validation(AccountErrors.PhoneSignUpDisabled, "Sign-up with a mobile number is not available.");
+            var created = await identity.CreatePhoneCustomerAsync(phone, request.DisplayName?.Trim(), ResolveLocale(request.Locale), cancellationToken);
+            if (!created.Succeeded)
+                return MapCreateErrors(created.ErrorCodes);
+            userId = created.UserId!;
+        }
+        else if (await identity.IsLockedOutAsync(userId!))
+        {
+            // A code proves the phone, not that the account may sign in while it is locked.
+            return AppError.Forbidden(AccountErrors.LockedOut, "Too many failed attempts. Try again later.");
+        }
+
+        await identity.SignInAsync(userId!, request.RememberMe);
+        var user = await identity.FindAsync(userId!);
+        return user is null
+            ? AppError.NotFound(AccountErrors.NotFound, "Account not found.")
+            : new PhoneSignInResult(user, isNew);
+    }
+
+    /// <summary>Sends a code to a number the signed-in user wants to add to their account.</summary>
+    public async Task<Result<PhoneCodeSent>> SendAddPhoneCodeAsync(string userId, SendPhoneCodeRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var phone = phoneNormalizer.Normalize(request.Phone, _store.PhoneRegion);
+        if (phone is null)
+            return AppError.Validation(AccountErrors.PhoneInvalid, "The mobile number is not valid.");
+
+        var owner = await identity.FindUserIdByPhoneAsync(phone, cancellationToken);
+        if (owner is not null && owner != userId)
+            return AppError.Conflict(AccountErrors.PhoneTaken, "Another account already uses this mobile number.");
+
+        var user = await identity.FindAsync(userId);
+        return await phoneCodes.SendAsync(phone, PhoneCodePurpose.VerifyPhone, userId,
+            ResolveLocale(request.Locale ?? user?.PreferredLocale), cancellationToken);
+    }
+
+    /// <summary>Saves the number as the user's verified phone once they enter the code.</summary>
+    public async Task<Result<CurrentUser>> ConfirmAddPhoneAsync(string userId, ConfirmPhoneRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var phone = phoneNormalizer.Normalize(request.Phone, _store.PhoneRegion);
+        if (phone is null)
+            return AppError.Validation(AccountErrors.PhoneInvalid, "The mobile number is not valid.");
+
+        var verified = await phoneCodes.VerifyAsync(phone, PhoneCodePurpose.VerifyPhone, userId, request.Code, cancellationToken);
+        if (!verified.IsSuccess)
+            return verified.Error!;
+
+        var saved = await identity.SetConfirmedPhoneAsync(userId, phone);
+        return saved.Succeeded ? await CurrentUserOrNotFound(userId) : MapCreateErrors(saved.ErrorCodes);
     }
 
     public async Task<Result<CurrentUser>> LoginAsync(LoginRequest request)

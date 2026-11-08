@@ -73,28 +73,28 @@ describe("LoginForm", () => {
 });
 
 describe("RegisterForm", () => {
-  it("shows only the identifiers this store accepts", () => {
-    render(<RegisterForm locale="en" texts={texts} signUp={{ email: true, phone: false }} />);
+  it("signs up by email only (mobile numbers sign up with an SMS code)", () => {
+    render(<RegisterForm locale="en" texts={texts} />);
 
     expect(screen.getByLabelText(texts.email)).toBeTruthy();
     expect(screen.queryByLabelText(texts.phone)).toBeNull();
   });
 
-  it("sends the locale and empty optional fields as null, then opens the account page", async () => {
+  it("sends the locale and an empty name as null, then opens the account page", async () => {
     respond(200, { id: "u1" });
-    render(<RegisterForm locale="en" texts={texts} signUp={{ email: true, phone: true }} />);
+    render(<RegisterForm locale="en" texts={texts} />);
 
     type(texts.email, " ali@example.com ");
     type(texts.password, "correct horse 42");
     fireEvent.click(screen.getByRole("button", { name: texts.submitRegister }));
 
     await waitFor(() => expect(router.replace).toHaveBeenCalledWith("/en/account"));
-    expect(sentBody()).toEqual({ email: "ali@example.com", phone: null, password: "correct horse 42", displayName: null, locale: "en" });
+    expect(sentBody()).toEqual({ email: "ali@example.com", password: "correct horse 42", displayName: null, locale: "en" });
   });
 
   it("puts validation errors next to the field", async () => {
     respond(400, { errors: { password: ["account.password_too_short"] } });
-    render(<RegisterForm locale="en" texts={texts} signUp={{ email: true, phone: false }} />);
+    render(<RegisterForm locale="en" texts={texts} />);
 
     fireEvent.click(screen.getByRole("button", { name: texts.submitRegister }));
 

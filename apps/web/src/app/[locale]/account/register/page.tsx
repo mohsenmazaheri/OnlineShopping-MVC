@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { AuthCard } from "@/components/account/FormParts";
+import { PhoneCodeForm } from "@/components/account/PhoneCodeForm";
 import { RegisterForm } from "@/components/account/RegisterForm";
 import { accountMetadata, routeLocale } from "@/lib/account/page-helpers";
 import type { Locale } from "@/lib/i18n/config";
@@ -11,10 +13,28 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/account/
   return accountMetadata(dict.account.registerTitle);
 }
 
-/** The sign-up methods depend on this shop's settings (phone only with SMS), read per request. */
+/**
+ * Email + password sign-up when enabled; with SMS, a mobile number signs up through a code (the account is created
+ * on first sign-in). A shop with phone-only sign-up shows just the code form.
+ */
 async function Register({ locale, texts }: { locale: Locale; texts: Dictionary["account"] }) {
   const store = await loadStore();
-  return <RegisterForm locale={locale} texts={texts} signUp={store.signUp} />;
+  const phone = store.signIn.phoneCode && store.signUp.phone;
+
+  if (!store.signUp.email) {
+    return phone ? <PhoneCodeForm locale={locale} texts={texts} mode="signIn" /> : <p>{texts.errors.email_sign_up_disabled}</p>;
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <RegisterForm locale={locale} texts={texts} />
+      {phone && (
+        <Link href={`/${locale}/account/login`} className="text-center text-sm text-primary underline">
+          {texts.registerWithPhone}
+        </Link>
+      )}
+    </div>
+  );
 }
 
 export default async function RegisterPage({ params }: PageProps<"/[locale]/account/register">) {

@@ -50,6 +50,7 @@ public static class DependencyInjection
 
         AddIdentityAndAuth(services, configuration);
         AddEmail(services, configuration);
+        AddSms(services, configuration);
 
         // Keys in the database: survive restarts and container replacement, shared by every app instance.
         var dataProtection = services.AddDataProtection().SetApplicationName("OnlineShop");
@@ -140,6 +141,37 @@ public static class DependencyInjection
             sp.GetRequiredService<IOptions<EmailOptions>>().Value.Delivery == EmailDelivery.Smtp
                 ? sp.GetRequiredService<SmtpEmailSender>()
                 : sp.GetRequiredService<PickupDirectoryEmailSender>());
+    }
+
+    private static void AddSms(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddOptions<SmsOptions>()
+            .Bind(configuration.GetSection(SmsOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        // Replaces the Application default (no SMS): on whenever a provider is configured.
+        services.AddSingleton<ISmsCapability, ConfiguredSmsCapability>();
+
+        static void Http(HttpClient client, string baseAddress)
+        {
+            client.BaseAddress = new Uri(baseAddress);
+            client.Timeout = TimeSpan.FromSeconds(15);
+        }
+        services.AddHttpClient<KavenegarSmsSender>(c => Http(c, KavenegarSmsSender.BaseAddress));
+        services.AddHttpClient<SmsIrSmsSender>(c => Http(c, SmsIrSmsSender.BaseAddress));
+        services.AddHttpClient<TwilioSmsSender>(c => Http(c, TwilioSmsSender.BaseAddress));
+        services.AddScoped<PickupSmsSender>();
+
+        // Chosen per resolution from the bound options (not read once at registration time).
+        services.AddScoped<ISmsSender>(sp => sp.GetRequiredService<IOptions<SmsOptions>>().Value.Provider switch
+        {
+            SmsProvider.Pickup => sp.GetRequiredService<PickupSmsSender>(),
+            SmsProvider.Kavenegar => sp.GetRequiredService<KavenegarSmsSender>(),
+            SmsProvider.SmsIr => sp.GetRequiredService<SmsIrSmsSender>(),
+            SmsProvider.Twilio => sp.GetRequiredService<TwilioSmsSender>(),
+            _ => new DisabledSmsSender()
+        });
     }
 
     internal static void ConfigureProvider(DbContextOptionsBuilder options, DatabaseProvider provider, string connectionString)

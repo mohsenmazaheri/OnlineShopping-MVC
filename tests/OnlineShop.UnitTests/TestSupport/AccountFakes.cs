@@ -82,6 +82,30 @@ internal sealed class FakeAccountIdentity : IAccountIdentity
         return Task.FromResult<(string, string, string?)?>(user is null ? null : (user.Id, $"reset-{user.Id}", user.Locale));
     }
 
+    public bool LockedOut { get; set; }
+
+    public Task<string?> FindUserIdByPhoneAsync(string phoneE164, CancellationToken cancellationToken = default) =>
+        Task.FromResult(Users.SingleOrDefault(u => u.Phone == phoneE164)?.Id);
+
+    public Task<IdentityCreateResult> CreatePhoneCustomerAsync(string phoneE164, string? displayName, string? locale,
+        CancellationToken cancellationToken = default)
+    {
+        var user = new User($"u{Users.Count + 1}", null, phoneE164, "", locale) { CurrentPassword = null };
+        Users.Add(user);
+        return Task.FromResult(IdentityCreateResult.Success(user.Id));
+    }
+
+    public Task<bool> IsLockedOutAsync(string userId) => Task.FromResult(LockedOut);
+
+    public Task<IdentityCreateResult> SetConfirmedPhoneAsync(string userId, string phoneE164)
+    {
+        if (Users.Any(u => u.Phone == phoneE164 && u.Id != userId))
+            return Task.FromResult(IdentityCreateResult.Failed(["DuplicatePhoneNumber"]));
+        var index = Users.FindIndex(u => u.Id == userId);
+        Users[index] = Users[index] with { Phone = phoneE164 };
+        return Task.FromResult(IdentityCreateResult.Success(userId));
+    }
+
     public Task<IdentityCreateResult> ResetPasswordAsync(string userId, string token, string newPassword)
     {
         var user = Users.SingleOrDefault(u => u.Id == userId);
@@ -106,4 +130,21 @@ internal sealed class CapturingEmailSender : IEmailSender
 internal sealed class FixedSmsCapability(bool enabled) : ISmsCapability
 {
     public bool IsEnabled => enabled;
+}
+
+/// <summary>Records codes instead of texting them; can be told to fail like a provider outage.</summary>
+internal sealed class CapturingSmsSender : ISmsSender
+{
+    public List<(string Phone, string Code, string Locale)> Sent { get; } = [];
+    public bool Fail { get; set; }
+
+    public string LastCodeFor(string phone) => Sent.Last(s => s.Phone == phone).Code;
+
+    public Task SendVerificationCodeAsync(string phoneE164, string code, string locale, CancellationToken cancellationToken = default)
+    {
+        if (Fail)
+            throw new SmsDeliveryException("provider down");
+        Sent.Add((phoneE164, code, locale));
+        return Task.CompletedTask;
+    }
 }

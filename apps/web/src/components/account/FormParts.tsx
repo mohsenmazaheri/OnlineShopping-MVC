@@ -8,7 +8,7 @@ type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
 };
 
 /** Labelled input with an accessible error/hint (aria-describedby), large touch target for mobile. */
-export function FormField({ label, name, error, hint, id, ...input }: FieldProps) {
+export function FormField({ label, name, error, hint, id, className, ...input }: FieldProps) {
   const inputId = id ?? `field-${name}`;
   const describedBy = [error ? `${inputId}-error` : null, hint ? `${inputId}-hint` : null].filter(Boolean).join(" ") || undefined;
   return (
@@ -21,7 +21,7 @@ export function FormField({ label, name, error, hint, id, ...input }: FieldProps
         name={name}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
-        className="h-12 rounded-xl border border-border bg-surface px-3 text-base outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 aria-[invalid=true]:border-red-500"
+        className={`h-12 rounded-xl border border-border bg-surface px-3 text-base outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 aria-[invalid=true]:border-red-500 ${className ?? ""}`}
         {...input}
       />
       {hint && !error && (

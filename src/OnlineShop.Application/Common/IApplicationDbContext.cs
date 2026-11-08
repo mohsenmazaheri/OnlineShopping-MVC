@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using OnlineShop.Domain.Accounts;
 using OnlineShop.Domain.Catalog;
 using OnlineShop.Domain.Sales;
 
@@ -19,6 +20,7 @@ public interface IApplicationDbContext
     DbSet<CartItem> CartItems { get; }
     DbSet<Order> Orders { get; }
     DbSet<OrderItem> OrderItems { get; }
+    DbSet<PhoneVerificationCode> PhoneVerificationCodes { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

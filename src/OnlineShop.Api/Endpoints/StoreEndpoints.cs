@@ -10,7 +10,10 @@ namespace OnlineShop.Api.Endpoints;
 /// <summary>Sign-up methods currently available (phone needs a configured SMS provider).</summary>
 public sealed record SignUpMethods(bool Email, bool Phone);
 
-public sealed record StoreInfoResponse(string Name, string DefaultLocale, IReadOnlyList<string> Locales, SignUpMethods SignUp);
+/// <summary>Sign-in methods currently available (SMS codes need a configured SMS provider).</summary>
+public sealed record SignInMethods(bool Password, bool PhoneCode);
+
+public sealed record StoreInfoResponse(string Name, string DefaultLocale, IReadOnlyList<string> Locales, SignUpMethods SignUp, SignInMethods SignIn);
 
 /// <summary>Public, read-only storefront endpoints (no authentication).</summary>
 public static class StoreEndpoints
@@ -23,7 +26,8 @@ public static class StoreEndpoints
             {
                 var store = options.Value;
                 var signUp = new SignUpMethods(auth.Value.EmailSignUp, auth.Value.PhoneSignUp && sms.IsEnabled);
-                return TypedResults.Ok(new StoreInfoResponse(store.Name, store.DefaultLocale, store.LocaleList, signUp));
+                var signIn = new SignInMethods(Password: true, PhoneCode: sms.IsEnabled);
+                return TypedResults.Ok(new StoreInfoResponse(store.Name, store.DefaultLocale, store.LocaleList, signUp, signIn));
             })
             .WithName("GetStoreInfo")
             .WithSummary("Store name, the locales it offers and the available sign-up methods.");

@@ -176,6 +176,15 @@ After an API contract change: build the API, run `npm run gen:api`, commit `open
   `configuration.Get<T>()` while registering services — later sources (env vars, tests) would be ignored.
 - Email: `IEmailSender` (`Email:Delivery` = `Smtp` in production, `Pickup` = `.eml` files under `App_Data/mail` in
   development). Texts in `EmailTemplates` for every locale; links always point at `Store:PublicUrl/{locale}/…`.
+- SMS: `ISmsSender` with providers `Kavenegar` (Verify Lookup template), `SmsIr` (Verify template), `Twilio` (text),
+  `Pickup` (development: `App_Data/sms/*.txt`), `None` (default). `ISmsCapability.IsEnabled` gates every SMS feature.
+  Provider credentials are validated at startup. `System.Net.Http.HttpClient` logging stays at Warning: Kavenegar's API
+  key is part of the request URL.
+- Phone accounts: sign-in and sign-up are one flow (`/account/phone/send-code` → `/account/phone/sign-in`); a new number
+  becomes a verified, password-less customer. Password sign-up is email only. `PhoneCodeService` owns the code rules
+  (`PhoneCodes` options: length, lifetime, cooldown, attempts, hourly cap); only salted hashes are stored
+  (`phone_verification_codes`). A lockout also blocks code sign-in. Rate limits return `ErrorKind.TooManyRequests` → 429.
+- Tests that depend on time replace the DI `TimeProvider` with `FakeTimeProvider` instead of sleeping.
 - Web: forms post JSON to `/api/v1/account/*` from the browser (`postJson`); server components read the user with
   `getCurrentUser()` (forwards only the session cookie, never cached). `proxy.ts` redirects signed-out visitors away
   from private `/{locale}/account/*` pages; `safeReturnPath()` prevents open redirects.

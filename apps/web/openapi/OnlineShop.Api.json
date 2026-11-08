@@ -238,6 +238,180 @@
         }
       }
     },
+    "/api/v1/account/phone/send-code": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Text a one-time sign-in code to a mobile number (same answer whether or not it has an account).",
+        "operationId": "SendPhoneSignInCode",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendPhoneCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneCodeSent"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/phone/sign-in": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Sign in with the SMS code; a new number gets a customer account.",
+        "operationId": "PhoneSignIn",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhoneSignInRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneSignInResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/phone/add/send-code": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Text a code to a number the signed-in user wants to add.",
+        "operationId": "SendAddPhoneCode",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendPhoneCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneCodeSent"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/phone/add/confirm": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Save the number as the user's verified phone with the SMS code.",
+        "operationId": "ConfirmAddPhone",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmPhoneRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUser"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/account/confirm-email": {
       "post": {
         "tags": [
@@ -393,6 +567,21 @@
           }
         }
       },
+      "ConfirmPhoneRequest": {
+        "required": [
+          "phone",
+          "code"
+        ],
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        }
+      },
       "CurrentUser": {
         "required": [
           "id",
@@ -541,6 +730,79 @@
           }
         }
       },
+      "PhoneCodeSent": {
+        "required": [
+          "expiresInSeconds",
+          "resendAfterSeconds"
+        ],
+        "type": "object",
+        "properties": {
+          "expiresInSeconds": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "resendAfterSeconds": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "PhoneSignInRequest": {
+        "required": [
+          "phone",
+          "code",
+          "displayName",
+          "locale",
+          "rememberMe"
+        ],
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "locale": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "rememberMe": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PhoneSignInResult": {
+        "required": [
+          "user",
+          "isNewAccount"
+        ],
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/CurrentUser"
+          },
+          "isNewAccount": {
+            "type": "boolean"
+          }
+        }
+      },
       "ProblemDetails": {
         "type": "object",
         "properties": {
@@ -582,7 +844,6 @@
       "RegisterRequest": {
         "required": [
           "email",
-          "phone",
           "password",
           "displayName",
           "locale"
@@ -590,12 +851,6 @@
         "type": "object",
         "properties": {
           "email": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "phone": {
             "type": [
               "null",
               "string"
@@ -637,6 +892,40 @@
           }
         }
       },
+      "SendPhoneCodeRequest": {
+        "required": [
+          "phone",
+          "locale"
+        ],
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string"
+          },
+          "locale": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "SignInMethods": {
+        "required": [
+          "password",
+          "phoneCode"
+        ],
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "boolean"
+          },
+          "phoneCode": {
+            "type": "boolean"
+          }
+        },
+        "description": "Sign-in methods currently available (SMS codes need a configured SMS provider)."
+      },
       "SignUpMethods": {
         "required": [
           "email",
@@ -658,7 +947,8 @@
           "name",
           "defaultLocale",
           "locales",
-          "signUp"
+          "signUp",
+          "signIn"
         ],
         "type": "object",
         "properties": {
@@ -676,6 +966,9 @@
           },
           "signUp": {
             "$ref": "#/components/schemas/SignUpMethods"
+          },
+          "signIn": {
+            "$ref": "#/components/schemas/SignInMethods"
           }
         }
       },

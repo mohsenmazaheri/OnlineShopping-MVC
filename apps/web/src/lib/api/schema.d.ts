@@ -123,6 +123,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/account/phone/send-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Text a one-time sign-in code to a mobile number (same answer whether or not it has an account). */
+        post: operations["SendPhoneSignInCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/phone/sign-in": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sign in with the SMS code; a new number gets a customer account. */
+        post: operations["PhoneSignIn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/phone/add/send-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Text a code to a number the signed-in user wants to add. */
+        post: operations["SendAddPhoneCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/phone/add/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Save the number as the user's verified phone with the SMS code. */
+        post: operations["ConfirmAddPhone"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/account/confirm-email": {
         parameters: {
             query?: never;
@@ -206,6 +274,10 @@ export interface components {
             userId: string;
             token: string;
         };
+        ConfirmPhoneRequest: {
+            phone: string;
+            code: string;
+        };
         CurrentUser: {
             id: string;
             displayName: null | string;
@@ -238,6 +310,23 @@ export interface components {
             password: string;
             rememberMe: boolean;
         };
+        PhoneCodeSent: {
+            /** Format: int32 */
+            expiresInSeconds: number | string;
+            /** Format: int32 */
+            resendAfterSeconds: number | string;
+        };
+        PhoneSignInRequest: {
+            phone: string;
+            code: string;
+            displayName: null | string;
+            locale: null | string;
+            rememberMe: boolean;
+        };
+        PhoneSignInResult: {
+            user: components["schemas"]["CurrentUser"];
+            isNewAccount: boolean;
+        };
         ProblemDetails: {
             type?: null | string;
             title?: null | string;
@@ -248,7 +337,6 @@ export interface components {
         };
         RegisterRequest: {
             email: null | string;
-            phone: null | string;
             password: string;
             displayName: null | string;
             locale: null | string;
@@ -257,6 +345,15 @@ export interface components {
             userId: string;
             token: string;
             newPassword: string;
+        };
+        SendPhoneCodeRequest: {
+            phone: string;
+            locale: null | string;
+        };
+        /** @description Sign-in methods currently available (SMS codes need a configured SMS provider). */
+        SignInMethods: {
+            password: boolean;
+            phoneCode: boolean;
         };
         /** @description Sign-up methods currently available (phone needs a configured SMS provider). */
         SignUpMethods: {
@@ -268,6 +365,7 @@ export interface components {
             defaultLocale: string;
             locales: string[];
             signUp: components["schemas"]["SignUpMethods"];
+            signIn: components["schemas"]["SignInMethods"];
         };
         SubCategorySummary: {
             /** Format: uuid */
@@ -482,6 +580,147 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    SendPhoneSignInCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendPhoneCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhoneCodeSent"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    PhoneSignIn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhoneSignInRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhoneSignInResult"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    SendAddPhoneCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendPhoneCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhoneCodeSent"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    ConfirmAddPhone: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmPhoneRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurrentUser"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
         };

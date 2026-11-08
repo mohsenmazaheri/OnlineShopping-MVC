@@ -28,6 +28,15 @@ public static class AccountErrors
     public const string NotFound = "account.not_found";
     public const string NoEmail = "account.no_email";
     public const string TokenRequired = "account.token_required";
+    public const string PhoneRequired = "account.phone_required";
+    public const string CodeRequired = "account.code_required";
+    public const string CodeInvalid = "account.code_invalid";
+    public const string CodeExpired = "account.code_expired";
+    public const string CodeAttemptsExceeded = "account.code_attempts_exceeded";
+    public const string CodeCooldown = "account.code_cooldown";
+    public const string CodeLimitReached = "account.code_limit_reached";
+    public const string SmsDisabled = "account.sms_disabled";
+    public const string SmsFailed = "account.sms_failed";
 }
 
 /// <summary>Password rules shared by registration and reset (Identity enforces the same rules again).</summary>
@@ -49,25 +58,45 @@ public sealed class RegisterRequestValidator : AbstractValidator<RegisterRequest
 {
     public RegisterRequestValidator()
     {
-        RuleFor(r => r)
-            .Must(r => !string.IsNullOrWhiteSpace(r.Email) || !string.IsNullOrWhiteSpace(r.Phone))
-            .WithErrorCode(AccountErrors.EmailOrPhoneRequired)
-            .WithMessage("Enter an email address or a mobile number.")
-            .OverridePropertyName("email");
-
+        // Password sign-up is by email; phone accounts come from signing in with an SMS code.
         RuleFor(r => r.Email!)
-            .Must(EmailRules.IsValid).WithErrorCode(AccountErrors.EmailInvalid)
-            .When(r => !string.IsNullOrWhiteSpace(r.Email));
-
-        RuleFor(r => r.Phone!)
-            .MaximumLength(32).WithErrorCode(AccountErrors.PhoneInvalid)
-            .When(r => !string.IsNullOrWhiteSpace(r.Phone));
+            .NotEmpty().WithErrorCode(AccountErrors.EmailOrPhoneRequired)
+            .Must(EmailRules.IsValid).WithErrorCode(AccountErrors.EmailInvalid);
 
         RuleFor(r => r.Password).ValidPassword();
 
         RuleFor(r => r.DisplayName!)
             .MaximumLength(100).WithErrorCode(AccountErrors.DisplayNameTooLong)
             .When(r => r.DisplayName is not null);
+    }
+}
+
+public sealed class SendPhoneCodeRequestValidator : AbstractValidator<SendPhoneCodeRequest>
+{
+    public SendPhoneCodeRequestValidator()
+    {
+        RuleFor(r => r.Phone).NotEmpty().WithErrorCode(AccountErrors.PhoneRequired).MaximumLength(32).WithErrorCode(AccountErrors.PhoneInvalid);
+    }
+}
+
+public sealed class PhoneSignInRequestValidator : AbstractValidator<PhoneSignInRequest>
+{
+    public PhoneSignInRequestValidator()
+    {
+        RuleFor(r => r.Phone).NotEmpty().WithErrorCode(AccountErrors.PhoneRequired).MaximumLength(32).WithErrorCode(AccountErrors.PhoneInvalid);
+        RuleFor(r => r.Code).NotEmpty().WithErrorCode(AccountErrors.CodeRequired).MaximumLength(12).WithErrorCode(AccountErrors.CodeInvalid);
+        RuleFor(r => r.DisplayName!)
+            .MaximumLength(100).WithErrorCode(AccountErrors.DisplayNameTooLong)
+            .When(r => r.DisplayName is not null);
+    }
+}
+
+public sealed class ConfirmPhoneRequestValidator : AbstractValidator<ConfirmPhoneRequest>
+{
+    public ConfirmPhoneRequestValidator()
+    {
+        RuleFor(r => r.Phone).NotEmpty().WithErrorCode(AccountErrors.PhoneRequired).MaximumLength(32).WithErrorCode(AccountErrors.PhoneInvalid);
+        RuleFor(r => r.Code).NotEmpty().WithErrorCode(AccountErrors.CodeRequired).MaximumLength(12).WithErrorCode(AccountErrors.CodeInvalid);
     }
 }
 

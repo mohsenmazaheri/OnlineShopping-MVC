@@ -79,7 +79,31 @@
       "display_name_too_long": "Der Name ist zu lang.",
       "no_email": "Dieses Konto hat keine E-Mail-Adresse.",
       "not_found": "Konto nicht gefunden.",
-      "origin_rejected": "Anfrage aus nicht vertrauenswürdiger Quelle abgelehnt."
-    }
+      "origin_rejected": "Anfrage aus nicht vertrauenswürdiger Quelle abgelehnt.",
+      "phone_required": "Geben Sie Ihre Handynummer ein.",
+      "code_required": "Geben Sie den Bestätigungscode ein.",
+      "code_invalid": "Der Code ist nicht korrekt.",
+      "code_expired": "Der Code ist abgelaufen. Fordern Sie einen neuen an.",
+      "code_attempts_exceeded": "Zu viele Versuche. Fordern Sie einen neuen Code an.",
+      "code_cooldown": "Bitte warten Sie kurz, bevor Sie einen neuen Code anfordern.",
+      "code_limit_reached": "An diese Nummer wurden zu viele Codes gesendet. Versuchen Sie es in einer Stunde erneut.",
+      "sms_disabled": "Die Anmeldung per SMS ist in diesem Shop nicht verfügbar.",
+      "sms_failed": "Die SMS konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
+    },
+    "withCode": "Mit SMS-Code",
+    "withPassword": "Mit Passwort",
+    "sendCode": "Code senden",
+    "code": "Bestätigungscode",
+    "codeSentTo": "Wir haben einen 6-stelligen Code an {phone} gesendet.",
+    "verifyCode": "Bestätigen und anmelden",
+    "resend": "Code erneut senden",
+    "resendIn": "Erneut senden in {seconds} s",
+    "changeNumber": "Nummer ändern",
+    "phoneHint": "Zum Beispiel 0151 23456789",
+    "registerWithPhone": "Mit Handynummer registrieren",
+    "addPhoneTitle": "Handynummer hinzufügen",
+    "addPhoneSave": "Bestätigen und speichern",
+    "phoneSaved": "Ihre Handynummer wurde gespeichert.",
+    "welcome": "Willkommen! Ihr Konto wurde erstellt."
   }
 }

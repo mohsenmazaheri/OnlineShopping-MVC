@@ -7,29 +7,21 @@ import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { FormAlert, FormField, SubmitButton } from "./FormParts";
 import { useApiForm } from "./useApiForm";
 
-type Props = {
-  locale: string;
-  texts: Dictionary["account"];
-  /** Which identifiers this store accepts at sign-up (phone only with SMS configured). */
-  signUp: { email: boolean; phone: boolean };
-};
+type Props = { locale: string; texts: Dictionary["account"] };
 
-export function RegisterForm({ locale, texts, signUp }: Props) {
+/** Email + password sign-up. (Mobile numbers sign up by SMS code: see PhoneCodeForm.) */
+export function RegisterForm({ locale, texts }: Props) {
   const router = useRouter();
   const { busy, submit, formError, fieldError } = useApiForm(texts.errors);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const value = (name: string) => {
-      const v = String(form.get(name) ?? "").trim();
-      return v.length > 0 ? v : null;
-    };
+    const displayName = String(form.get("displayName") ?? "").trim();
     const result = await submit("/api/v1/account/register", {
-      email: signUp.email ? value("email") : null,
-      phone: signUp.phone ? value("phone") : null,
+      email: String(form.get("email") ?? "").trim(),
       password: String(form.get("password") ?? ""),
-      displayName: value("displayName"),
+      displayName: displayName.length > 0 ? displayName : null,
       locale,
     });
     if (result.ok) {
@@ -42,12 +34,7 @@ export function RegisterForm({ locale, texts, signUp }: Props) {
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
       {formError && <FormAlert kind="error">{formError}</FormAlert>}
       <FormField label={texts.displayName} name="displayName" autoComplete="name" maxLength={100} error={fieldError("displayName")} />
-      {signUp.email && (
-        <FormField label={texts.email} name="email" type="email" autoComplete="email" dir="ltr" error={fieldError("email")} />
-      )}
-      {signUp.phone && (
-        <FormField label={texts.phone} name="phone" type="tel" autoComplete="tel" inputMode="tel" dir="ltr" error={fieldError("phone")} />
-      )}
+      <FormField label={texts.email} name="email" type="email" autoComplete="email" dir="ltr" required error={fieldError("email")} />
       <FormField
         label={texts.password}
         name="password"

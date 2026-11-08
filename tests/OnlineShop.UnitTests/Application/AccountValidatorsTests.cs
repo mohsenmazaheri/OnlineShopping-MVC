@@ -9,21 +9,33 @@ public sealed class AccountValidatorsTests
     private static IEnumerable<string> Codes(FluentValidation.Results.ValidationResult result) =>
         result.Errors.Select(e => e.ErrorCode);
 
-    [Fact]
-    public void Registration_needs_an_email_or_a_phone()
+    [Theory]
+    [InlineData(null)]
+    [InlineData(" ")]
+    public void Password_registration_needs_an_email(string? email)
     {
-        var result = new RegisterRequestValidator().Validate(new RegisterRequest(null, " ", GoodPassword, null, null));
+        var result = new RegisterRequestValidator().Validate(new RegisterRequest(email, GoodPassword, null, null));
 
         Assert.Contains(AccountErrors.EmailOrPhoneRequired, Codes(result));
     }
 
-    [Theory]
-    [InlineData("ali@example.com", null)]
-    [InlineData(null, "09121234567")]
-    [InlineData("ali@example.com", "09121234567")]
-    public void Registration_with_email_or_phone_and_a_good_password_is_valid(string? email, string? phone)
+    [Fact]
+    public void Registration_with_email_and_a_good_password_is_valid()
     {
-        Assert.True(new RegisterRequestValidator().Validate(new RegisterRequest(email, phone, GoodPassword, "Ali", "fa")).IsValid);
+        Assert.True(new RegisterRequestValidator().Validate(new RegisterRequest("ali@example.com", GoodPassword, "Ali", "fa")).IsValid);
+    }
+
+    [Fact]
+    public void Phone_code_requests_need_a_phone_and_a_code()
+    {
+        Assert.Contains(AccountErrors.PhoneRequired, Codes(new SendPhoneCodeRequestValidator().Validate(new SendPhoneCodeRequest("", null))));
+
+        var signIn = Codes(new PhoneSignInRequestValidator().Validate(new PhoneSignInRequest("09121234567", "", null, null, false)));
+        Assert.Contains(AccountErrors.CodeRequired, signIn);
+
+        var confirm = Codes(new ConfirmPhoneRequestValidator().Validate(new ConfirmPhoneRequest("", "123456"))).ToList();
+        Assert.Contains(AccountErrors.PhoneRequired, confirm);
+        Assert.True(new ConfirmPhoneRequestValidator().Validate(new ConfirmPhoneRequest("09121234567", "123456")).IsValid);
     }
 
     [Theory]
@@ -32,7 +44,7 @@ public sealed class AccountValidatorsTests
     [InlineData("twelve letters only", AccountErrors.PasswordNeedsDigit)]
     public void Weak_passwords_are_rejected_with_a_code(string password, string code)
     {
-        var result = new RegisterRequestValidator().Validate(new RegisterRequest("ali@example.com", null, password, null, null));
+        var result = new RegisterRequestValidator().Validate(new RegisterRequest("ali@example.com", password, null, null));
 
         Assert.Contains(code, Codes(result));
     }
@@ -48,7 +60,7 @@ public sealed class AccountValidatorsTests
     [Fact]
     public void An_invalid_email_is_rejected()
     {
-        var result = new RegisterRequestValidator().Validate(new RegisterRequest("ali@", null, GoodPassword, null, null));
+        var result = new RegisterRequestValidator().Validate(new RegisterRequest("ali@", GoodPassword, null, null));
 
         Assert.Contains(AccountErrors.EmailInvalid, Codes(result));
     }

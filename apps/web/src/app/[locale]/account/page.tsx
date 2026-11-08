@@ -1,25 +1,30 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { LogoutButton, ResendConfirmationButton } from "@/components/account/AccountActions";
-import { AuthCard } from "@/components/account/FormParts";
-import { accountMetadata, routeLocale } from "@/lib/account/page-helpers";
+import { AuthCard, FormAlert } from "@/components/account/FormParts";
+import { PhoneCodeForm } from "@/components/account/PhoneCodeForm";
+import { accountMetadata, firstParam, routeLocale } from "@/lib/account/page-helpers";
 import { getCurrentUser } from "@/lib/account/session";
 import type { Locale } from "@/lib/i18n/config";
 import { getDictionary, type Dictionary } from "@/lib/i18n/dictionaries";
+import { loadStore } from "@/lib/store/load";
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/account">) {
   const dict = await getDictionary(routeLocale((await params).locale));
   return accountMetadata(dict.account.accountTitle);
 }
 
-/** Phase 2a: who is signed in, email confirmation, sign out. Profile, addresses and security follow in 2e. */
-async function AccountSummary({ locale, texts }: { locale: Locale; texts: Dictionary["account"] }) {
-  const user = await getCurrentUser();
+type Search = Promise<Record<string, string | string[] | undefined>>;
+
+/** Who is signed in, email confirmation, adding a phone, sign out. Profile, addresses and security follow in 2e. */
+async function AccountSummary({ locale, texts, searchParams }: { locale: Locale; texts: Dictionary["account"]; searchParams: Search }) {
+  const [user, store, query] = await Promise.all([getCurrentUser(), loadStore(), searchParams]);
   // proxy.ts already redirects visitors without a session cookie; this covers expired or invalid sessions.
   if (!user) redirect(`/${locale}/account/login?returnUrl=${encodeURIComponent(`/${locale}/account`)}`);
 
   return (
     <div className="flex flex-col gap-4">
+      {firstParam(query.welcome) === "1" && <FormAlert kind="success">{texts.welcome}</FormAlert>}
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
         {user.displayName && (
           <>
@@ -46,18 +51,26 @@ async function AccountSummary({ locale, texts }: { locale: Locale; texts: Dictio
           <ResendConfirmationButton texts={texts} />
         </div>
       )}
+      {!user.phoneNumber && store.signIn.phoneCode && (
+        <section aria-labelledby="add-phone" className="rounded-xl border border-border p-3">
+          <h2 id="add-phone" className="mb-3 font-semibold">
+            {texts.addPhoneTitle}
+          </h2>
+          <PhoneCodeForm locale={locale} texts={texts} mode="addPhone" />
+        </section>
+      )}
       <LogoutButton locale={locale} texts={texts} />
     </div>
   );
 }
 
-export default async function AccountPage({ params }: PageProps<"/[locale]/account">) {
+export default async function AccountPage({ params, searchParams }: PageProps<"/[locale]/account">) {
   const locale = routeLocale((await params).locale);
   const dict = await getDictionary(locale);
   return (
     <AuthCard title={dict.account.accountTitle}>
       <Suspense fallback={<p role="status">{dict.account.working}</p>}>
-        <AccountSummary locale={locale} texts={dict.account} />
+        <AccountSummary locale={locale} texts={dict.account} searchParams={searchParams} />
       </Suspense>
     </AuthCard>
   );

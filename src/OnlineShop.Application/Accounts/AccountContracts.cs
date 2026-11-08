@@ -1,6 +1,15 @@
 namespace OnlineShop.Application.Accounts;
 
-public sealed record RegisterRequest(string? Email, string? Phone, string Password, string? DisplayName, string? Locale);
+/// <summary>Password sign-up is by email; phone accounts are created by signing in with an SMS code (always verified).</summary>
+public sealed record RegisterRequest(string? Email, string Password, string? DisplayName, string? Locale);
+
+public sealed record SendPhoneCodeRequest(string Phone, string? Locale);
+
+public sealed record PhoneSignInRequest(string Phone, string Code, string? DisplayName, string? Locale, bool RememberMe);
+
+public sealed record ConfirmPhoneRequest(string Phone, string Code);
+
+public sealed record PhoneSignInResult(CurrentUser User, bool IsNewAccount);
 
 public sealed record LoginRequest(string Identifier, string Password, bool RememberMe);
 
@@ -68,6 +77,17 @@ public interface IAccountIdentity
     Task<(string UserId, string Token, string? Locale)?> CreatePasswordResetTokenAsync(string email);
 
     Task<IdentityCreateResult> ResetPasswordAsync(string userId, string token, string newPassword);
+
+    Task<string?> FindUserIdByPhoneAsync(string phoneE164, CancellationToken cancellationToken = default);
+
+    /// <summary>Creates a customer from a verified phone number (no password; signs in with SMS codes).</summary>
+    Task<IdentityCreateResult> CreatePhoneCustomerAsync(string phoneE164, string? displayName, string? locale,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> IsLockedOutAsync(string userId);
+
+    /// <summary>Sets a verified phone number on an existing account (fails with DuplicatePhoneNumber when taken).</summary>
+    Task<IdentityCreateResult> SetConfirmedPhoneAsync(string userId, string phoneE164);
 }
 
 public sealed record IdentityCreateResult(string? UserId, IReadOnlyList<string> ErrorCodes)

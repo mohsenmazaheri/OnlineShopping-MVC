@@ -21,7 +21,7 @@ public sealed class AccountTests(ApiFactory factory) : IClassFixture<ApiFactory>
         using var client = factory.CreateClient();
         var email = NewEmail();
 
-        using var register = await client.PostAsJsonAsync("/api/v1/account/register", new RegisterRequest(email, null, Password, "Ali", "en"));
+        using var register = await client.PostAsJsonAsync("/api/v1/account/register", new RegisterRequest(email, Password, "Ali", "en"));
 
         Assert.Equal(HttpStatusCode.OK, register.StatusCode);
         var cookie = Assert.Single(register.Headers.GetValues("Set-Cookie"), c => c.StartsWith(DependencyInjection.AuthCookieName + "=", StringComparison.Ordinal));
@@ -85,7 +85,7 @@ public sealed class AccountTests(ApiFactory factory) : IClassFixture<ApiFactory>
         await RegisterAsync(client, email);
 
         using var again = await factory.CreateClient().PostAsJsonAsync("/api/v1/account/register",
-            new RegisterRequest(email.ToUpperInvariant(), null, Password, null, null));
+            new RegisterRequest(email.ToUpperInvariant(), Password, null, null));
 
         await AssertProblemAsync(again, HttpStatusCode.Conflict, AccountErrors.EmailTaken);
     }
@@ -95,7 +95,7 @@ public sealed class AccountTests(ApiFactory factory) : IClassFixture<ApiFactory>
     {
         using var client = factory.CreateClient();
 
-        using var response = await client.PostAsJsonAsync("/api/v1/account/register", new RegisterRequest(NewEmail(), null, "short1", null, null));
+        using var response = await client.PostAsJsonAsync("/api/v1/account/register", new RegisterRequest(NewEmail(), "short1", null, null));
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         using var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
@@ -104,13 +104,13 @@ public sealed class AccountTests(ApiFactory factory) : IClassFixture<ApiFactory>
     }
 
     [Fact]
-    public async Task Phone_sign_up_is_off_while_no_SMS_provider_is_configured()
+    public async Task Sign_in_codes_are_unavailable_while_no_SMS_provider_is_configured()
     {
         using var client = factory.CreateClient();
 
-        using var response = await client.PostAsJsonAsync("/api/v1/account/register", new RegisterRequest(null, "09121234567", Password, null, null));
+        using var response = await client.PostAsJsonAsync("/api/v1/account/phone/send-code", new SendPhoneCodeRequest("09121234567", "fa"));
 
-        await AssertProblemAsync(response, HttpStatusCode.BadRequest, AccountErrors.PhoneSignUpDisabled);
+        await AssertProblemAsync(response, HttpStatusCode.BadRequest, AccountErrors.SmsDisabled);
     }
 
     [Fact]
@@ -201,7 +201,7 @@ public sealed class AccountTests(ApiFactory factory) : IClassFixture<ApiFactory>
         using var client = factory.CreateClient();
         using var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/account/register")
         {
-            Content = JsonContent.Create(new RegisterRequest(NewEmail(), null, Password, null, null))
+            Content = JsonContent.Create(new RegisterRequest(NewEmail(), Password, null, null))
         };
         request.Headers.Add("Origin", ApiFactory.PublicUrl);
 
@@ -212,7 +212,7 @@ public sealed class AccountTests(ApiFactory factory) : IClassFixture<ApiFactory>
 
     private static async Task<CurrentUser> RegisterAsync(HttpClient client, string email)
     {
-        using var response = await client.PostAsJsonAsync("/api/v1/account/register", new RegisterRequest(email, null, Password, null, "en"));
+        using var response = await client.PostAsJsonAsync("/api/v1/account/register", new RegisterRequest(email, Password, null, "en"));
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<CurrentUser>(Json))!;
     }

@@ -79,7 +79,31 @@
       "display_name_too_long": "The name is too long.",
       "no_email": "This account has no email address.",
       "not_found": "Account not found.",
-      "origin_rejected": "Request from an untrusted source was rejected."
-    }
+      "origin_rejected": "Request from an untrusted source was rejected.",
+      "phone_required": "Enter your mobile number.",
+      "code_required": "Enter the verification code.",
+      "code_invalid": "The code is not correct.",
+      "code_expired": "The code has expired. Ask for a new one.",
+      "code_attempts_exceeded": "Too many attempts. Ask for a new code.",
+      "code_cooldown": "Please wait a moment before asking for another code.",
+      "code_limit_reached": "Too many codes were sent to this number. Try again in an hour.",
+      "sms_disabled": "Sign-in by SMS is not available in this shop.",
+      "sms_failed": "The SMS could not be sent. Please try again."
+    },
+    "withCode": "With an SMS code",
+    "withPassword": "With a password",
+    "sendCode": "Send code",
+    "code": "Verification code",
+    "codeSentTo": "We texted a 6-digit code to {phone}.",
+    "verifyCode": "Verify and sign in",
+    "resend": "Send the code again",
+    "resendIn": "Send again in {seconds} s",
+    "changeNumber": "Change number",
+    "phoneHint": "For example +44 7700 900123",
+    "registerWithPhone": "Sign up with a mobile number",
+    "addPhoneTitle": "Add a mobile number",
+    "addPhoneSave": "Verify and save",
+    "phoneSaved": "Your mobile number was saved.",
+    "welcome": "Welcome! Your account was created."
   }
 }

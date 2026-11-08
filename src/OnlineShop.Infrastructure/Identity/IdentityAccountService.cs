@@ -129,4 +129,54 @@ public sealed class IdentityAccountService(
         await users.ResetAccessFailedCountAsync(user);
         return IdentityCreateResult.Success(user.Id);
     }
+
+    public Task<string?> FindUserIdByPhoneAsync(string phoneE164, CancellationToken cancellationToken = default) =>
+        users.Users.Where(u => u.PhoneNumber == phoneE164).Select(u => u.Id).SingleOrDefaultAsync(cancellationToken);
+
+    public async Task<IdentityCreateResult> CreatePhoneCustomerAsync(string phoneE164, string? displayName, string? locale,
+        CancellationToken cancellationToken = default)
+    {
+        var user = new AppUser
+        {
+            UserName = Guid.CreateVersion7().ToString("N"),
+            PhoneNumber = phoneE164,
+            // Created right after the code was entered: the number is proven.
+            PhoneNumberConfirmed = true,
+            DisplayName = displayName,
+            PreferredLocale = locale,
+            CreatedUtc = clock.GetUtcNow().UtcDateTime,
+            LockoutEnabled = true
+        };
+
+        var created = await users.CreateAsync(user);
+        if (!created.Succeeded)
+            return IdentityCreateResult.Failed(created.Errors.Select(e => e.Code).ToList());
+
+        var role = await users.AddToRoleAsync(user, AppRoles.Customer);
+        if (!role.Succeeded)
+            throw new InvalidOperationException("Could not add the new user to the Customer role: " +
+                                                string.Join("; ", role.Errors.Select(e => e.Code)));
+        return IdentityCreateResult.Success(user.Id);
+    }
+
+    public async Task<bool> IsLockedOutAsync(string userId)
+    {
+        var user = await users.FindByIdAsync(userId);
+        return user is not null && await users.IsLockedOutAsync(user);
+    }
+
+    public async Task<IdentityCreateResult> SetConfirmedPhoneAsync(string userId, string phoneE164)
+    {
+        var user = await users.FindByIdAsync(userId);
+        if (user is null)
+            return IdentityCreateResult.Failed(["NotFound"]);
+
+        user.PhoneNumber = phoneE164;
+        user.PhoneNumberConfirmed = true;
+        // UpdateAsync runs AppUserValidator, which rejects a number another account already uses.
+        var result = await users.UpdateAsync(user);
+        return result.Succeeded
+            ? IdentityCreateResult.Success(user.Id)
+            : IdentityCreateResult.Failed(result.Errors.Select(e => e.Code).ToList());
+    }
 }
