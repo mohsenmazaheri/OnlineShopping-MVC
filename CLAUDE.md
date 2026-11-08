@@ -27,7 +27,12 @@ Recorded decisions (details in the roadmap):
   Prices are entered in a base currency and converted with admin-set rates + per-currency rounding (manual override
   allowed); an order stores the currency and rate it was paid with. Money always carries a currency.
 - **Iran deployment:** hosted in Iran, SMS OTP + email login, external logins off. **No runtime dependency on external
-  services in any deployment** — self-host fonts, icons, scripts and images (no CDNs, no Google Fonts).
+  services in any deployment** — self-host fonts, icons, scripts and images (no CDNs, no Google Fonts). The only
+  exception: marketing tags (GTM/GA4, Meta Pixel, Matomo) that the admin opts into, loaded only after cookie consent;
+  the site must work fully without them.
+- **SEO & marketing design: [docs/SEO-MARKETING.md](docs/SEO-MARKETING.md).** URLs `/{locale}/p/{number}/{slug}`
+  (every locale prefixed, stable numeric product number, slug mismatch → 301), hreflang only for translated locales,
+  JSON-LD, sitemaps, redirects, blog, product feeds (Google, Meta, Torob, Emalls), UTM attribution on orders.
 - **SMS is optional**: everything must work with SMS disabled (default `NullSmsSender`).
 - **Tax:** one simple rate per shop, prices incl./excl. tax, PDF invoices with sequential numbers. No e-invoicing
   integrations (Moadian, e-HDM, EU VAT OSS) in v1.
@@ -55,7 +60,11 @@ Recorded decisions (details in the roadmap):
    icons, images, texts or CSS. Use our own palette, open-licensed icons and OFL fonts (e.g. Vazirmatn).
 7. **Identity generics always use `AppUser`**, never `IdentityUser` — including in scaffolded Identity pages
    (scaffolding defaults to `IdentityUser`; this broke login/logout in BulkyWeb).
-8. Keep packages free of known vulnerabilities: `dotnet list package --vulnerable --include-transitive` and
+8. **Every public page is SEO-complete**: server-rendered content (works without client JS), title, description,
+   canonical, hreflang, `lang`/`dir`, valid JSON-LD matching the visible price/stock, no layout shift. Filter/sort
+   URLs canonicalize to the unfiltered page; never change a public URL without a 301. Non-production instances are
+   always `noindex`. Use the acceptance checklist at the end of `docs/SEO-MARKETING.md`.
+9. Keep packages free of known vulnerabilities: `dotnet list package --vulnerable --include-transitive` and
    `npm audit`; pin a patched version directly when a transitive dependency is vulnerable.
 
 ## Repository layout
