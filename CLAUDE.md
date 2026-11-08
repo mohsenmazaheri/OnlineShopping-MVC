@@ -20,10 +20,21 @@ Recorded decisions (details in the roadmap):
   SQL Server and MySQL. Keep provider-specific SQL inside that provider's migrations/config.
 - **Roles:** works both as a **one-person shop** (owner has only `Admin`, which covers everything) and with
   **divided staff roles** (`Manager`, `Warehouse`, `Accountant`). There is no Seller / multi-vendor role.
+- **Single-tenant:** one container + one database per shop; no `tenant_id`. All shops run the same versioned image.
+- **Scope:** online B2C sales of physical goods only — no POS, digital products or B2B (backlog).
 - **Currencies & gateways** are configured per deployment by the system admin (Europe: EUR/USD; Armenia: AMD/EUR/USD;
-  Iran: IRR only, with ZarinPal/Sadad/Behpardakht; Stripe/PayPal/Paddle elsewhere). Money always carries a currency.
+  Iran: IRR only, with ZarinPal/Sadad/Behpardakht; Stripe/PayPal elsewhere). Paddle is out (digital goods only).
+  Prices are entered in a base currency and converted with admin-set rates + per-currency rounding (manual override
+  allowed); an order stores the currency and rate it was paid with. Money always carries a currency.
+- **Iran deployment:** hosted in Iran, SMS OTP + email login, external logins off. **No runtime dependency on external
+  services in any deployment** — self-host fonts, icons, scripts and images (no CDNs, no Google Fonts).
 - **SMS is optional**: everything must work with SMS disabled (default `NullSmsSender`).
-- Languages fa, en, hy, de, ar (RTL for fa/ar); adding a language must be cheap. Light and dark theme.
+- **Tax:** one simple rate per shop, prices incl./excl. tax, PDF invoices with sequential numbers. No e-invoicing
+  integrations (Moadian, e-HDM, EU VAT OSS) in v1.
+- **Branding:** admin-editable logo/colors/fonts/banners plus several ready-made layout templates (no rebuild needed).
+- Languages fa, en, hy, de, ar (RTL for fa/ar); adding a language must be cheap. Product content is translated
+  **manually only** (no external translation service); untranslated fields fall back to the default language.
+- Light and dark theme. v1 ships to all markets at once.
 
 ## Non-negotiable rules
 
