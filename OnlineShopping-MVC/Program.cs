@@ -1,13 +1,21 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OnlineShopping_MVC.Data;
+using OnlineShopping_MVC.Data.Interceptors;
 using OnlineShopping_MVC.Models.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<AuditableEntityInterceptor>();
+
 // EF Core (SQL Server)
-builder.Services.AddDbContext<AppDbContext>(opts =>
-    opts.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+builder.Services.AddDbContext<AppDbContext>((sp, opts) =>
+    opts.UseSqlServer(builder.Configuration.GetConnectionString("Default"))
+        .AddInterceptors(sp.GetRequiredService<AuditableEntityInterceptor>()));
+
+builder.Services.Configure<SeedOptions>(builder.Configuration.GetSection(SeedOptions.SectionName));
+builder.Services.AddScoped<DataSeeder>();
 
 // Identity + Roles
 builder.Services.AddIdentity<AppUser, IdentityRole>(o =>
@@ -50,10 +58,10 @@ app.MapControllerRoute(
 app.MapRazorPages();
 app.MapBlazorHub();
 
-// Seed roles + default admin
+// Migrate (when enabled), then seed roles + first admin
 using (var scope = app.Services.CreateScope())
 {
-    await DataSeeder.SeedAsync(scope.ServiceProvider);
+    await scope.ServiceProvider.GetRequiredService<DataSeeder>().SeedAsync();
 }
 
 await app.RunAsync();
