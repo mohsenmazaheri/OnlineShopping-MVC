@@ -33,6 +33,10 @@ Recorded decisions (details in the roadmap):
 - **SEO & marketing design: [docs/SEO-MARKETING.md](docs/SEO-MARKETING.md).** URLs `/{locale}/p/{number}/{slug}`
   (every locale prefixed, stable numeric product number, slug mismatch → 301), hreflang only for translated locales,
   JSON-LD, sitemaps, redirects, blog, product feeds (Google, Meta, Torob, Emalls), UTM attribution on orders.
+- **Search:** behind `IProductSearch`, chosen by `Search:Provider` — PostgreSQL (default, Full-Text + `pg_trgm`),
+  OpenSearch or Elasticsearch (optional, self-hosted). PostgreSQL stays the source of truth: the index is synced via an
+  outbox, can be rebuilt, and search falls back to PostgreSQL when the engine is down. Displayed price/stock always
+  come from PostgreSQL. Design in the roadmap, phases 4 and 6.
 - **SMS is optional**: everything must work with SMS disabled (default `NullSmsSender`).
 - **Tax:** one simple rate per shop, prices incl./excl. tax, PDF invoices with sequential numbers. No e-invoicing
   integrations (Moadian, e-HDM, EU VAT OSS) in v1.
