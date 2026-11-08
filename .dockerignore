@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/.next/
+**/coverage/
+**/.vs/
+.git/
+.github/
+docs/
+tests/
+deploy/.env
+**/.env
+**/.env.*
+!deploy/.env.example
+*.user

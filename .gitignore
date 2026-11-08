@@ -53,3 +53,20 @@ CodeCoverage/
 TestResult.xml
 nunit-*.xml
 /.vs
+
+# IDE / tooling
+.vs/
+*.csproj.user
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Local environment files (secrets)
+.env
+.env.*
+!.env.example

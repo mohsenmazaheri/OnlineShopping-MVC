@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens (phase 3 replaces these with the full design system and admin-editable brand colors).
+ * Our own neutral palette — no third-party brand colors.
+ */
+:root {
+  --background: #f7f7f8;
+  --surface: #ffffff;
+  --foreground: #1c1c21;
+  --muted: #6b6b76;
+  --border: #e4e4e9;
+  --primary: #0f766e;
+  --primary-foreground: #ffffff;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #121216;
+    --surface: #1c1c22;
+    --foreground: #ececf1;
+    --muted: #a1a1ad;
+    --border: #2e2e37;
+    --primary: #2dd4bf;
+    --primary-foreground: #04201d;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  /* Self-hosted fonts arrive in phase 3; system fonts render instantly with no network request. */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Armenian", Tahoma, sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}

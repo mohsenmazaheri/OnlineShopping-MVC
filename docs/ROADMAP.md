@@ -84,29 +84,35 @@
 
 ---
 
-## فاز ۱ — Monorepo، معماری و زیرساخت ⬜
+## فاز ۱ — Monorepo، معماری و زیرساخت 🔄
 
 **خروجی:** اسکلت کامل قابل اجرا روی لینوکس و ویندوز.
 
-- ساختار:
-  ```
-  apps/web/                      Next.js (TypeScript, App Router, PWA)
-  src/OnlineShop.Domain/
-  src/OnlineShop.Application/
-  src/OnlineShop.Infrastructure/
-  src/OnlineShop.Infrastructure.Migrations.PostgreSql/
-  src/OnlineShop.Api/            ASP.NET Core Web API (پروژهٔ فعلی)
-  tests/…UnitTests, …IntegrationTests (Testcontainers + PostgreSQL)
-  deploy/                        docker-compose, nginx, systemd, IIS
-  ```
-- نصب Node.js LTS روی سیستم توسعه.
-- API: OpenAPI، نسخه‌بندی، `ProblemDetails`، اعتبارسنجی (FluentValidation)، `Result<T>`، Serilog، Health checks.
-- Next.js: TypeScript strict، ESLint/Prettier، کلاینت تایپ‌شده از روی OpenAPI، manifest و Service Worker برای PWA.
-- پایهٔ امنیتی: HTTPS/HSTS، CSP و سایر هدرها، CORS محدود، Rate limiting، Antiforgery، ذخیرهٔ کلیدهای Data Protection در پایگاه داده.
-- CI (GitHub Actions): build + test هر دو بخش، اسکن آسیب‌پذیری، Docker image نسخه‌دار، انتشار در رجیستری قابل دسترس از ایران.
-- کارهای پس‌زمینه (انقضای رزرو، ایمیل، پیامک) با Hosted service و صف مبتنی بر PostgreSQL؛ **بدون Redis** (برای فروشگاه کوچک لازم نیست).
-- لاگ و مانیتورینگ: Serilog + OpenTelemetry، endpoint سلامت برای مانیتورینگ هر نصب.
-- پایهٔ SEO ([SEO-MARKETING](SEO-MARKETING.md) بندهای ۱، ۲، ۶): SSR صفحات عمومی، `robots.ts`/`sitemap.ts`، تنظیم `Seo:AllowIndexing` (پیش‌فرض خاموش غیر از Production)، یک میزبان اصلی و قواعد canonical، Lighthouse CI در هر PR.
+```
+apps/web/                                   Next.js 16 (TypeScript, App Router, Cache Components, PWA)
+src/OnlineShop.Domain/                      موجودیت‌ها (بدون وابستگی)
+src/OnlineShop.Application/                 Use caseها، Result<T>، IApplicationDbContext، StoreOptions
+src/OnlineShop.Infrastructure/              EF Core/PostgreSQL، Identity، Data Protection، Seeder
+src/OnlineShop.Infrastructure.Migrations.PostgreSql/
+src/OnlineShop.Api/                         ASP.NET Core Web API
+tests/OnlineShop.UnitTests, tests/OnlineShop.IntegrationTests (PostgreSQL واقعی)
+deploy/                                     Dockerfileها، docker-compose، نمونهٔ nginx
+```
+
+انجام شد ✅
+- Node.js 26 LTS روی سیستم توسعه؛ تفکیک لایه‌ها؛ Central Package Management؛ Analyzerها با «هشدار = خطا».
+- API: endpointهای `/api/v1/store` و `/api/v1/catalog/categories`، OpenAPI (تولید در زمان build + کلاینت تایپ‌شدهٔ TypeScript)، `ProblemDetails` با کد خطا، `Result<T>`، Serilog، `/health/live` و `/health/ready`، Options validation در Startup.
+- امنیت API: هدرهای امنیتی، HSTS، Rate limiting، تنظیم امن Forwarded headers، کلیدهای Data Protection در پایگاه داده، OpenAPI فقط در Development.
+- Next.js: مسیرهای `/{locale}` با RTL/LTR، canonical/hreflang، robots/sitemap/manifest، آیکون PWA، Service Worker (صفحات همیشه از شبکه)، صفحهٔ آفلاین، CSP و هدرهای امنیتی، endpoint بازسازی کش با رمز مشترک.
+- **یک image برای همهٔ فروشگاه‌ها:** تنظیمات فروشگاه فقط در API است و Next.js آن‌ها را در زمان درخواست می‌خواند؛ build به API نیاز ندارد (با یک build، دو پیکربندی متفاوت آزموده شد).
+- Docker (API، web، PostgreSQL)، `.env.example`، نمونهٔ nginx، workflow CI (build، تست با PostgreSQL، اسکن آسیب‌پذیری، بررسی هم‌خوانی Migration و OpenAPI، ساخت image).
+- تست‌ها: ۶۹ واحد + ۱۰ یکپارچه‌سازی (.NET) و ۵۴ تست Next.js.
+
+باقی‌مانده ⬜
+- اجرای واقعی `docker compose up` روی لینوکس و ویندوز (Docker روی سیستم توسعه نصب نیست) و اولین اجرای سبز CI در GitHub.
+- ثبت Service Worker در یک مرورگر واقعی (مرورگر داخلی محیط توسعه اجازهٔ Service Worker نمی‌دهد).
+- Lighthouse CI و Prettier؛ OpenTelemetry؛ رجیستری image قابل دسترس از ایران.
+- به فاز مصرف‌کننده منتقل شد: FluentValidation و Antiforgery (فاز ۲، اولین فرم‌ها)، صف کارهای پس‌زمینه (فاز ۵/۷).
 
 **معیار پایان:** `docker compose up` روی لینوکس و ویندوز صفحهٔ اصلی Next.js را با داده از API نشان دهد؛ CI سبز.
 

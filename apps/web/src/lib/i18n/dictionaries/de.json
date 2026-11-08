@@ -1,0 +1,11 @@
+{
+  "meta": { "description": "Einfach, schnell und sicher online einkaufen" },
+  "home": {
+    "categories": "Kategorien",
+    "noCategories": "Noch keine Kategorien.",
+    "loading": "Wird geladen…",
+    "unavailable": "Der Shop ist vorübergehend nicht erreichbar. Bitte versuchen Sie es gleich noch einmal."
+  },
+  "offline": { "title": "Sie sind offline", "body": "Laden Sie die Seite neu, sobald Sie wieder online sind." },
+  "notFound": { "title": "Seite nicht gefunden", "home": "Zur Startseite" }
+}
