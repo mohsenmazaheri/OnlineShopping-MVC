@@ -6,7 +6,8 @@ public enum ErrorKind
     Validation,
     NotFound,
     Conflict,
-    Forbidden
+    Forbidden,
+    TooManyRequests
 }
 
 /// <summary>A business error: a stable machine-readable <see cref="Code"/> plus a human-readable message.</summary>
@@ -16,6 +17,7 @@ public sealed record AppError(ErrorKind Kind, string Code, string Message)
     public static AppError Validation(string code, string message) => new(ErrorKind.Validation, code, message);
     public static AppError Conflict(string code, string message) => new(ErrorKind.Conflict, code, message);
     public static AppError Forbidden(string code, string message) => new(ErrorKind.Forbidden, code, message);
+    public static AppError TooManyRequests(string code, string message) => new(ErrorKind.TooManyRequests, code, message);
 }
 
 /// <summary>Factory methods for <see cref="Result{T}"/>.</summary>

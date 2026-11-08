@@ -29,7 +29,9 @@ public sealed class DependencyInjectionTests
         var identity = services.GetRequiredService<IOptions<IdentityOptions>>().Value;
 
         Assert.Equal(12, identity.Password.RequiredLength);
-        Assert.True(identity.User.RequireUniqueEmail);
+        // Email OR phone: uniqueness is enforced by AppUserValidator and unique indexes instead.
+        Assert.False(identity.User.RequireUniqueEmail);
+        Assert.True(identity.Lockout.AllowedForNewUsers);
         Assert.Equal(5, identity.Lockout.MaxFailedAccessAttempts);
     }
 

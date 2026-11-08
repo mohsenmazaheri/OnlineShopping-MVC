@@ -39,6 +39,43 @@ services:
       Store__Name: ${STORE_NAME:-Online Shop}
       Store__Locales: ${STORE_LOCALES:-fa,en}
       Store__DefaultLocale: ${DEFAULT_LOCALE:-fa}
+      # Links in emails and the only origin allowed to send state-changing requests (CSRF check).
+      Store__PublicUrl: ${SITE_URL:?Set SITE_URL in deploy/.env}
+      Store__PhoneRegion: ${PHONE_REGION:-IR}
+      # Countries addresses may be in (ISO codes, comma-separated); empty = PHONE_REGION only.
+      Store__ShippingCountries: ${SHIPPING_COUNTRIES:-}
+      Store__GuestCheckout: ${GUEST_CHECKOUT:-true}
+      Auth__EmailSignUp: ${AUTH_EMAIL_SIGN_UP:-true}
+      Auth__PhoneSignUp: ${AUTH_PHONE_SIGN_UP:-true}
+      # Only for a plain-HTTP test instance set this to false (cookies would otherwise not be sent).
+      Auth__SecureCookies: ${AUTH_SECURE_COOKIES:-true}
+      Email__Delivery: ${EMAIL_DELIVERY:-Smtp}
+      Email__FromAddress: ${EMAIL_FROM_ADDRESS:-no-reply@localhost}
+      Email__FromName: ${STORE_NAME:-Online Shop}
+      Email__SmtpHost: ${SMTP_HOST:-}
+      Email__SmtpPort: ${SMTP_PORT:-587}
+      Email__SmtpUser: ${SMTP_USER:-}
+      Email__SmtpPassword: ${SMTP_PASSWORD:-}
+      # External sign-in (optional; a provider is offered only when both values are set)
+      Auth__External__Google__ClientId: ${GOOGLE_CLIENT_ID:-}
+      Auth__External__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET:-}
+      Auth__External__Facebook__ClientId: ${FACEBOOK_APP_ID:-}
+      Auth__External__Facebook__ClientSecret: ${FACEBOOK_APP_SECRET:-}
+      Auth__External__Microsoft__ClientId: ${MICROSOFT_CLIENT_ID:-}
+      Auth__External__Microsoft__ClientSecret: ${MICROSOFT_CLIENT_SECRET:-}
+      # Staff permissions only work after two-step sign-in (true/false)
+      Security__RequireStaffTwoFactor: ${REQUIRE_STAFF_TWO_FACTOR:-false}
+      # SMS (optional): None | Kavenegar | SmsIr | Twilio
+      Sms__Provider: ${SMS_PROVIDER:-None}
+      Sms__Kavenegar__ApiKey: ${KAVENEGAR_API_KEY:-}
+      Sms__Kavenegar__VerifyTemplate: ${KAVENEGAR_VERIFY_TEMPLATE:-}
+      Sms__SmsIr__ApiKey: ${SMSIR_API_KEY:-}
+      Sms__SmsIr__VerifyTemplateId: ${SMSIR_VERIFY_TEMPLATE_ID:-0}
+      Sms__SmsIr__CodeParameterName: ${SMSIR_CODE_PARAMETER:-Code}
+      Sms__Twilio__AccountSid: ${TWILIO_ACCOUNT_SID:-}
+      Sms__Twilio__AuthToken: ${TWILIO_AUTH_TOKEN:-}
+      Sms__Twilio__From: ${TWILIO_FROM:-}
+      Sms__Twilio__MessagingServiceSid: ${TWILIO_MESSAGING_SERVICE_SID:-}
       # The API is reachable only from the web container on this private network, so it may trust
       # X-Forwarded-For; otherwise every visitor would share the web container's rate-limit bucket.
       ReverseProxy__TrustForwardedHeadersFromAnyHost: "true"

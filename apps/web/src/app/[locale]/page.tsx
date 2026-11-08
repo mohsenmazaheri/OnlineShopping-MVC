@@ -30,11 +30,7 @@ async function HomeContent({ dict }: { dict: Dictionary }) {
 
   return (
     <>
-      <header className="border-b border-border bg-surface">
-        <div className="mx-auto max-w-6xl px-4 py-4">
-          <h1 className="text-xl font-extrabold text-primary">{store.name}</h1>
-        </div>
-      </header>
+      <h1 className="sr-only">{store.name}</h1>
       {categories ? (
         <CategoryGrid categories={categories} heading={dict.home.categories} emptyText={dict.home.noCategories} />
       ) : (

@@ -209,6 +209,67 @@ namespace OnlineShop.Infrastructure.Migrations.PostgreSql.Migrations
                     b.ToTable("user_tokens", (string)null);
                 });
 
+            modelBuilder.Entity("OnlineShop.Domain.Accounts.PhoneVerificationCode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CodeHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("code_hash");
+
+                    b.Property<DateTime?>("ConsumedUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("consumed_utc");
+
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_utc");
+
+                    b.Property<DateTime>("ExpiresUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_utc");
+
+                    b.Property<int>("FailedAttempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("failed_attempts");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("phone_number");
+
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("purpose");
+
+                    b.Property<string>("Salt")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("salt");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_phone_verification_codes");
+
+                    b.HasIndex("PhoneNumber", "Purpose", "CreatedUtc")
+                        .HasDatabaseName("ix_phone_verification_codes_phone_number_purpose_created_utc");
+
+                    b.ToTable("phone_verification_codes", (string)null);
+                });
+
             modelBuilder.Entity("OnlineShop.Domain.Catalog.Category", b =>
                 {
                     b.Property<Guid>("Id")
@@ -455,6 +516,95 @@ namespace OnlineShop.Infrastructure.Migrations.PostgreSql.Migrations
                     b.ToTable("sub_categories", (string)null);
                 });
 
+            modelBuilder.Entity("OnlineShop.Domain.Customers.CustomerAddress", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("city");
+
+                    b.Property<string>("CountryCode")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character(2)")
+                        .HasColumnName("country_code")
+                        .IsFixedLength();
+
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_utc");
+
+                    b.Property<string>("CustomerId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)")
+                        .HasColumnName("customer_id");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_default");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<string>("Label")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("label");
+
+                    b.Property<string>("Line1")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("line1");
+
+                    b.Property<string>("Line2")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("line2");
+
+                    b.Property<DateTime?>("ModifiedUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_utc");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("phone_number");
+
+                    b.Property<string>("PostalCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("postal_code");
+
+                    b.Property<string>("RecipientName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("recipient_name");
+
+                    b.Property<string>("Region")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("region");
+
+                    b.HasKey("Id")
+                        .HasName("pk_customer_addresses");
+
+                    b.HasIndex("CustomerId")
+                        .HasDatabaseName("ix_customer_addresses_customer_id");
+
+                    b.ToTable("customer_addresses", (string)null);
+                });
+
             modelBuilder.Entity("OnlineShop.Domain.Sales.Cart", b =>
                 {
                     b.Property<Guid>("Id")
@@ -670,8 +820,13 @@ namespace OnlineShop.Infrastructure.Migrations.PostgreSql.Migrations
                         .HasColumnType("text")
                         .HasColumnName("concurrency_stamp");
 
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_utc");
+
                     b.Property<string>("DisplayName")
-                        .HasColumnType("text")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("display_name");
 
                     b.Property<string>("Email")
@@ -682,6 +837,10 @@ namespace OnlineShop.Infrastructure.Migrations.PostgreSql.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean")
                         .HasColumnName("email_confirmed");
+
+                    b.Property<DateTime?>("ErasedUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("erased_utc");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean")
@@ -706,12 +865,18 @@ namespace OnlineShop.Infrastructure.Migrations.PostgreSql.Migrations
                         .HasColumnName("password_hash");
 
                     b.Property<string>("PhoneNumber")
-                        .HasColumnType("text")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
                         .HasColumnName("phone_number");
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("boolean")
                         .HasColumnName("phone_number_confirmed");
+
+                    b.Property<string>("PreferredLocale")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)")
+                        .HasColumnName("preferred_locale");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text")
@@ -730,11 +895,18 @@ namespace OnlineShop.Infrastructure.Migrations.PostgreSql.Migrations
                         .HasName("pk_users");
 
                     b.HasIndex("NormalizedEmail")
-                        .HasDatabaseName("EmailIndex");
+                        .IsUnique()
+                        .HasDatabaseName("ux_users_normalized_email")
+                        .HasFilter("normalized_email IS NOT NULL");
 
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
+
+                    b.HasIndex("PhoneNumber")
+                        .IsUnique()
+                        .HasDatabaseName("ux_users_phone_number")
+                        .HasFilter("phone_number IS NOT NULL");
 
                     b.ToTable("users", (string)null);
                 });
@@ -842,6 +1014,16 @@ namespace OnlineShop.Infrastructure.Migrations.PostgreSql.Migrations
                         .HasConstraintName("fk_sub_categories_categories_category_id");
 
                     b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("OnlineShop.Domain.Customers.CustomerAddress", b =>
+                {
+                    b.HasOne("OnlineShop.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_customer_addresses_users_customer_id");
                 });
 
             modelBuilder.Entity("OnlineShop.Domain.Sales.Cart", b =>

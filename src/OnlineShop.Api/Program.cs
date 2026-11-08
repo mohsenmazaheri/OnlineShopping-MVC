@@ -39,6 +39,17 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromSeconds(builder.Configuration.GetValue("RateLimiting:WindowSeconds", 60)),
                 QueueLimit = 0
             }));
+
+    // Much tighter limit for sign-in, sign-up and recovery: slows down password guessing and email flooding.
+    options.AddPolicy(AccountEndpoints.AuthRateLimitPolicy, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = builder.Configuration.GetValue("RateLimiting:AuthPermitPerWindow", 10),
+                Window = TimeSpan.FromSeconds(builder.Configuration.GetValue("RateLimiting:WindowSeconds", 60)),
+                QueueLimit = 0
+            }));
 });
 
 builder.Services.AddHsts(options =>
@@ -50,18 +61,20 @@ builder.Services.AddHsts(options =>
 var app = builder.Build();
 
 app.UseForwardedHeaders();
+app.UseMiddleware<PublicOriginMiddleware>();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 
+// TLS ends at the reverse proxy; the API is reached over the private network only, so no HTTPS redirect here.
 if (!app.Environment.IsDevelopment())
-{
     app.UseHsts();
-    app.UseHttpsRedirection();
-}
 
 app.UseSerilogRequestLogging();
+app.UseMiddleware<OriginCheckMiddleware>();
 app.UseRateLimiter();
+app.UseAuthentication();
+app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())
     app.MapOpenApi();
@@ -74,6 +87,11 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 }).DisableRateLimiting();
 
 app.MapStoreEndpoints();
+app.MapAccountEndpoints();
+app.MapExternalLoginEndpoints();
+app.MapTwoFactorEndpoints();
+app.MapProfileEndpoints();
+app.MapAddressEndpoints();
 
 // Build-time OpenAPI generation starts the app without a database: skip migrations and seeding there.
 if (!isOpenApiGeneration)

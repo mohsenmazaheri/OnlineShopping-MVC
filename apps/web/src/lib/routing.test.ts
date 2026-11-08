@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isApiPath, localeRedirectTarget } from "./routing";
+import { accountRedirectTarget, isApiPath, localeRedirectTarget } from "./routing";
 
 const store = { defaultLocale: "fa" as const, locales: ["fa" as const, "en" as const] };
 
@@ -42,5 +42,28 @@ describe("API forwarding", () => {
     expect(isApiPath("/api/v1/store")).toBe(true);
     expect(isApiPath("/api/revalidate")).toBe(false);
     expect(isApiPath("/fa")).toBe(false);
+  });
+});
+
+describe("account pages need a session", () => {
+  it("sends signed-out visitors to the login page with a return address", () => {
+    expect(accountRedirectTarget("/fa/account", "", false)).toBe("/fa/account/login?returnUrl=%2Ffa%2Faccount");
+    expect(accountRedirectTarget("/en/account/orders", "?page=2", false)).toBe(
+      "/en/account/login?returnUrl=%2Fen%2Faccount%2Forders%3Fpage%3D2",
+    );
+  });
+
+  it("lets visitors with a session cookie through (the page verifies it)", () => {
+    expect(accountRedirectTarget("/fa/account", "", true)).toBeNull();
+  });
+
+  it.each(["login", "register", "forgot-password", "reset-password", "confirm-email"])("keeps /account/%s public", (page) => {
+    expect(accountRedirectTarget(`/fa/account/${page}`, "", false)).toBeNull();
+  });
+
+  it("ignores other pages", () => {
+    expect(accountRedirectTarget("/fa", "", false)).toBeNull();
+    expect(accountRedirectTarget("/fa/accounting", "", false)).toBeNull();
+    expect(accountRedirectTarget("/xx/account", "", false)).toBeNull();
   });
 });

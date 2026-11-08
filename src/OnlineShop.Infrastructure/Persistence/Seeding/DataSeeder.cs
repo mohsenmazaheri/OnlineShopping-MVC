@@ -16,7 +16,8 @@ public sealed partial class DataSeeder(
     RoleManager<IdentityRole> roleManager,
     UserManager<AppUser> userManager,
     IOptions<SeedOptions> options,
-    ILogger<DataSeeder> logger)
+    ILogger<DataSeeder> logger,
+    TimeProvider clock)
 {
 
     private readonly SeedOptions _options = options.Value;
@@ -55,7 +56,8 @@ public sealed partial class DataSeeder(
                 UserName = _options.AdminEmail,
                 Email = _options.AdminEmail,
                 EmailConfirmed = true,
-                DisplayName = "Admin"
+                DisplayName = "Admin",
+                CreatedUtc = clock.GetUtcNow().UtcDateTime
             };
             EnsureSucceeded(await userManager.CreateAsync(admin, _options.AdminPassword), "create the admin user");
             LogAdminCreated(logger, _options.AdminEmail);

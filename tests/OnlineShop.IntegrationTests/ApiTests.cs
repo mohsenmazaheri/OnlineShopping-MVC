@@ -56,6 +56,7 @@ public sealed class ApiTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.Equal("Test Shop", store.Name);
         Assert.Equal("fa", store.DefaultLocale);
         Assert.Equal(["fa", "en"], store.Locales);
+        Assert.Equal(new SignUpMethods(Email: true, Phone: false), store.SignUp);
     }
 
     [Fact]

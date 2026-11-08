@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { apiBaseUrl } from "@/lib/api/base-url";
-import { isApiPath, localeRedirectTarget } from "@/lib/routing";
+import { sessionCookieName } from "@/lib/account/cookie";
+import { accountRedirectTarget, isApiPath, localeRedirectTarget } from "@/lib/routing";
 import { securityHeaders } from "@/lib/security/headers";
 import { indexingAllowed, siteUrl } from "@/lib/seo/config";
 import { createStoreSettingsCache } from "@/lib/store/proxy-cache";
@@ -17,7 +18,9 @@ export async function proxy(request: NextRequest) {
   // The API sets its own (stricter) headers.
   if (isApiPath(pathname)) return NextResponse.rewrite(new URL(`${pathname}${search}`, apiBaseUrl()));
 
-  const target = localeRedirectTarget(pathname, search, await storeSettings());
+  const target =
+    localeRedirectTarget(pathname, search, await storeSettings()) ??
+    accountRedirectTarget(pathname, search, request.cookies.has(sessionCookieName));
   const response = target ? NextResponse.redirect(new URL(target, request.url), 307) : NextResponse.next();
 
   const isDev = process.env.NODE_ENV !== "production";

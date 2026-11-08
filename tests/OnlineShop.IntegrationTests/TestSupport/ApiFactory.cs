@@ -1,5 +1,9 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using OnlineShop.Application.Notifications;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 
@@ -52,13 +56,32 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
                 ["Database:MigrateOnStartup"] = "true",
                 ["Store:Name"] = "Test Shop",
                 ["Store:DefaultLocale"] = "fa",
-                ["Store:Locales"] = "fa,en"
+                ["Store:Locales"] = "fa,en",
+                ["Store:PublicUrl"] = PublicUrl,
+                ["Store:PhoneRegion"] = "IR",
+                // The test client talks plain HTTP.
+                ["Auth:SecureCookies"] = "false",
+                // Account tests sign in many times; the auth limit itself is tested separately.
+                ["RateLimiting:AuthPermitPerWindow"] = "1000"
             };
             foreach (var (key, value) in ConfigurationOverrides)
                 settings[key] = value;
             config.AddInMemoryCollection(settings);
         });
+
+        // Capture emails instead of writing files.
+        builder.ConfigureTestServices(services =>
+        {
+            services.RemoveAll<IEmailSender>();
+            services.AddSingleton<IEmailSender>(Emails);
+        });
     }
+
+    /// <summary>Plain HTTP like the test client: an https public address would make the API mark cookies Secure.</summary>
+    public const string PublicUrl = "http://shop.test";
+
+    /// <summary>Emails the API sent during this test class.</summary>
+    public CapturingEmailSender Emails { get; } = new();
 
     private static string ReadAdminConnection()
     {

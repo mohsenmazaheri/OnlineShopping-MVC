@@ -80,6 +80,26 @@ public sealed class StoreOptionsTests
         Assert.Equal(["fa", "en"], options.LocaleList);
     }
 
+    [Fact]
+    public void Shipping_countries_default_to_the_phone_region()
+    {
+        Assert.Equal(["AM"], new StoreOptions { PhoneRegion = "AM" }.ShippingCountryList);
+        Assert.Equal(["AM", "DE"], new StoreOptions { PhoneRegion = "AM", ShippingCountries = " AM, DE ," }.ShippingCountryList);
+    }
+
+    [Theory]
+    [InlineData("de")]
+    [InlineData("DEU")]
+    public void Shipping_countries_must_be_iso_codes(string countries)
+    {
+        var options = new StoreOptions { Locales = "fa", ShippingCountries = countries };
+
+        Assert.Contains(Validate(options), r => r.MemberNames.Contains(nameof(StoreOptions.ShippingCountries)));
+    }
+
+    [Fact]
+    public void Guest_checkout_is_on_by_default() => Assert.True(new StoreOptions().GuestCheckout);
+
     private static List<ValidationResult> Validate(StoreOptions options)
     {
         var results = new List<ValidationResult>();

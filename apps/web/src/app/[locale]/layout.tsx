@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
+import { SiteHeader } from "@/components/SiteHeader";
+import { getDictionary } from "@/lib/i18n/dictionaries";
 import { directionOf, isLocale, supportedLocales } from "@/lib/i18n/config";
 import { indexingAllowed, siteUrl } from "@/lib/seo/config";
 import { loadStore } from "@/lib/store/load";
@@ -42,9 +44,12 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
 
+  const dict = await getDictionary(locale);
+
   return (
     <html lang={locale} dir={directionOf(locale)} className="h-full antialiased">
       <body className="flex min-h-full flex-col">
+        <SiteHeader locale={locale} texts={dict.header} />
         {children}
         <Suspense fallback={null}>
           <StoreServiceWorker />

@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using OnlineShop.IntegrationTests.TestSupport;
 
 namespace OnlineShop.IntegrationTests;
@@ -33,5 +34,38 @@ public sealed class RateLimitingTests(RateLimitingTests.TightLimitFactory factor
 
         using var health = await client.GetAsync("/health/live");
         Assert.Equal(HttpStatusCode.OK, health.StatusCode);
+    }
+}
+
+/// <summary>Sign-in endpoints have their own, much tighter limit (password guessing, email flooding).</summary>
+public sealed class AuthRateLimitingTests(AuthRateLimitingTests.TightAuthLimitFactory factory)
+    : IClassFixture<AuthRateLimitingTests.TightAuthLimitFactory>
+{
+    public sealed class TightAuthLimitFactory : ApiFactory
+    {
+        protected override IReadOnlyDictionary<string, string?> ConfigurationOverrides => new Dictionary<string, string?>
+        {
+            ["RateLimiting:PermitPerWindow"] = "100",
+            ["RateLimiting:AuthPermitPerWindow"] = "2",
+            ["RateLimiting:WindowSeconds"] = "60"
+        };
+    }
+
+    [Fact]
+    public async Task Login_attempts_over_the_auth_limit_get_429_while_other_endpoints_still_answer()
+    {
+        using var client = factory.CreateClient();
+        var login = new OnlineShop.Application.Accounts.LoginRequest("someone@example.com", "wrong password 1", false);
+
+        var statuses = new List<HttpStatusCode>();
+        for (var i = 0; i < 3; i++)
+        {
+            using var response = await client.PostAsJsonAsync("/api/v1/account/login", login);
+            statuses.Add(response.StatusCode);
+        }
+
+        Assert.Equal([HttpStatusCode.BadRequest, HttpStatusCode.BadRequest, HttpStatusCode.TooManyRequests], statuses);
+        using var store = await client.GetAsync("/api/v1/store");
+        Assert.Equal(HttpStatusCode.OK, store.StatusCode);
     }
 }

@@ -155,6 +155,69 @@ After an API contract change: build the API, run `npm run gen:api`, commit `open
 - Logging via `[LoggerMessage]` source-generated methods (analyzer CA1848).
 - Code style: file-scoped namespaces, primary constructors, `sealed` by default, `required`/`= default!`.
 
+## Accounts and authorization
+
+- Accounts are identified by **email or phone** (at least one; each unique — `AppUserValidator` + filtered unique
+  indexes `ux_users_normalized_email`, `ux_users_phone_number`). `UserName` is an internal random value. Phones are
+  stored in E.164 via `IPhoneNumberNormalizer` (libphonenumber; accepts Persian/Arabic digits; `Store:PhoneRegion`).
+- Session = Identity application cookie `os_session` (HttpOnly, SameSite=Lax, Secure unless `Auth:SecureCookies=false`),
+  issued by the API and passed through the web proxy. The API answers 401/403, never redirects.
+- CSRF: `OriginCheckMiddleware` rejects POST/PUT/PATCH/DELETE whose `Origin` is not `Store:PublicUrl`'s origin.
+- Authorization: endpoints require **permissions**, not roles —
+  `.RequireAuthorization(Permissions.Policy(Permissions.CatalogManage))`. Roles map to permissions in
+  `RolePermissions` (fixed in code; Admin = all). Get the user id only via `User.GetUserId()`.
+- Account use cases live in `Application/Accounts/AccountService` behind `IAccountIdentity` (Identity in
+  Infrastructure). Request validation: FluentValidation validators + `.Validate<T>()` endpoint filter → 400 with
+  `errors: { field: [codes] }`. Error codes are `account.*` constants (`AccountErrors`, `ProfileErrors`,
+  `AddressErrors`); the web app translates them (`dictionaries/*.json` → `account.errors`), and a test that scans the
+  whole Application project fails if any code lacks a translation in any locale.
+- No account enumeration: wrong identifier and wrong password give the same answer; forgot-password always 202.
+- Sign-in/sign-up/recovery endpoints use the `auth` rate-limit policy (`RateLimiting:AuthPermitPerWindow`).
+- Options that depend on configuration must be read through `IOptions` at runtime, never with
+  `configuration.Get<T>()` while registering services — later sources (env vars, tests) would be ignored.
+- Email: `IEmailSender` (`Email:Delivery` = `Smtp` in production, `Pickup` = `.eml` files under `App_Data/mail` in
+  development). Texts in `EmailTemplates` for every locale; links always point at `Store:PublicUrl/{locale}/…`.
+- SMS: `ISmsSender` with providers `Kavenegar` (Verify Lookup template), `SmsIr` (Verify template), `Twilio` (text),
+  `Pickup` (development: `App_Data/sms/*.txt`), `None` (default). `ISmsCapability.IsEnabled` gates every SMS feature.
+  Provider credentials are validated at startup. `System.Net.Http.HttpClient` logging stays at Warning: Kavenegar's API
+  key is part of the request URL.
+- Phone accounts: sign-in and sign-up are one flow (`/account/phone/send-code` → `/account/phone/sign-in`); a new number
+  becomes a verified, password-less customer. Password sign-up is email only. `PhoneCodeService` owns the code rules
+  (`PhoneCodes` options: length, lifetime, cooldown, attempts, hourly cap); only salted hashes are stored
+  (`phone_verification_codes`). A lockout also blocks code sign-in. Rate limits return `ErrorKind.TooManyRequests` → 429.
+- Tests that depend on time replace the DI `TimeProvider` with `FakeTimeProvider` instead of sleeping.
+- External sign-in (Google/Facebook/Microsoft): `ExternalLoginService` (Application) holds the rules; an existing
+  account is linked automatically **only** when the provider verified the email (only Google's `email_verified` is
+  trusted — see `ExternalAuthGateway.Map`), otherwise `external_email_in_use`. The last sign-in method cannot be
+  unlinked. All three handlers are always registered; a provider without credentials (`Auth:External:*`) gets a
+  placeholder and is never offered (`IExternalLoginProviders`). OAuth callback path:
+  `/api/v1/account/external/{provider}/oauth-callback` (under /api/v1 so the web proxy forwards it); remote failures
+  redirect to `/{locale}/account/login?error=external_failed`.
+- Two-step sign-in (2FA): optional for every account, authenticator (TOTP) + 10 recovery codes + remember-device.
+  Rules in `TwoFactorService` (Application) behind `ITwoFactorIdentity`; `AppSignInManager.SignInWithSecondStepAsync`
+  makes code/provider sign-ins honour 2FA too. A first factor that needs the second step answers 403
+  `account.two_factor_required` (provider callbacks redirect to `login?error=two_factor_required`), then
+  `/api/v1/account/2fa/verify` or `/recovery` completes it. `Security:RequireStaffTwoFactor` (default false) makes
+  permission policies require the `amr=mfa` claim and forbids staff from turning 2FA off. The QR code is generated in
+  the browser (`qrcode`), never by an external service.
+- Every session carries `auth_time` (set in `AppSignInManager.SignInWithClaimsAsync`). Identity's periodic security
+  stamp check rebuilds the principal from the database; `SignInClaims.PreserveOnRefresh` keeps `auth_time`, `amr` and
+  the provider claim (without it, 2FA sessions silently lose `amr=mfa`). Use `SignInClaims.AuthTime(user)` for "signed
+  in recently" checks.
+- Profile/data rights: `ProfileService` and `PersonalDataService` (Application) behind `IAccountDataIdentity`, kept
+  apart from `IAccountIdentity`. Deleting an account **erases** it: personal rows are hard-deleted
+  (`ExecuteDeleteAsync`, not the soft delete), the `users` row stays with no personal data (`ErasedUtc`, skipped by
+  `AppUserValidator`) because orders reference it. Any new table with personal data must be cleared in
+  `PersonalDataService.DeleteAsync` and included in `ExportAsync`.
+- Addresses: `AddressService` (Application/Customers); every query filters `CustomerId == userId`. Countries come
+  from `Store:ShippingCountries` (empty = `PhoneRegion`), postal codes are checked by `PostalCodes`.
+- `PublicOriginMiddleware` makes the API see `Store:PublicUrl`'s scheme and host, so absolute URLs (OAuth redirect_uri)
+  and Secure cookies follow the storefront. Integration tests therefore use an `http://` public URL.
+- Browser redirects back into the storefront go through `ReturnPaths.Sanitize` (no open redirects).
+- Web: forms post JSON to `/api/v1/account/*` from the browser (`postJson`); server components read the user with
+  `getCurrentUser()` (forwards only the session cookie, never cached). `proxy.ts` redirects signed-out visitors away
+  from private `/{locale}/account/*` pages; `safeReturnPath()` prevents open redirects.
+
 ## Frontend conventions (Next.js 16 — read node_modules/next/dist/docs before using unfamiliar APIs)
 
 - Cache Components + Partial Prefetching are on. Data fetchers use `"use cache"` + `cacheTag` + `cacheLife`;
