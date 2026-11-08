@@ -4,32 +4,32 @@ This file guides Claude Code when working in this repository.
 
 ## Project overview
 
-**OnlineShopping-MVC** is a single-store online shop for **small businesses** (few to moderate customers). It must be
+**OnlineShop** is a single-store online shop for **small businesses** (few to moderate customers). It must be
 **cross-platform** (Linux and Windows servers), a **mobile-first PWA**, fast, and secure.
 
-Current state: one ASP.NET Core 10 project (MVC template + Identity UI) on **PostgreSQL 18**, plus a unit-test
-project. **Target architecture (roadmap phase 1): a monorepo with a Next.js (React + TypeScript) frontend in
-`apps/web` and an ASP.NET Core 10 Web API backend split into Domain / Application / Infrastructure / Api projects.**
-The Razor views are temporary and will be removed when the Next.js app takes over.
+Monorepo: an **ASP.NET Core 10 Web API** on **PostgreSQL 18** (Clean Architecture: Domain / Application /
+Infrastructure / Api) and a **Next.js 16** storefront in `apps/web`. Each shop is one Docker stack; the same images
+serve every shop.
 
 **The phased plan and all recorded decisions live in [docs/ROADMAP.md](docs/ROADMAP.md)** (Persian). Read it before
-starting work, work on one phase at a time, and mark the phase status there when a phase is done. Phase 0 is complete.
+starting work, work on one phase at a time, and mark the phase status there when a phase is done. Phase 0 is done;
+phase 1 is nearly done (see its "remaining" list).
 
 Recorded decisions (details in the roadmap):
-- **Database:** code-first EF Core, **separate migrations per provider**. PostgreSQL first (`snake_case`), then
-  SQL Server and MySQL. Keep provider-specific SQL inside that provider's migrations/config.
+- **Database:** code-first EF Core, **separate migrations per provider** (one migrations project each). PostgreSQL
+  first (`snake_case`), then SQL Server and MySQL. Keep provider-specific SQL inside that provider's migrations/config.
 - **Roles:** works both as a **one-person shop** (owner has only `Admin`, which covers everything) and with
   **divided staff roles** (`Manager`, `Warehouse`, `Accountant`). There is no Seller / multi-vendor role.
-- **Single-tenant:** one container + one database per shop; no `tenant_id`. All shops run the same versioned image.
+- **Single-tenant:** one stack + one database per shop; no `tenant_id`. All shops run the same versioned images.
 - **Scope:** online B2C sales of physical goods only — no POS, digital products or B2B (backlog).
 - **Currencies & gateways** are configured per deployment by the system admin (Europe: EUR/USD; Armenia: AMD/EUR/USD;
   Iran: IRR only, with ZarinPal/Sadad/Behpardakht; Stripe/PayPal elsewhere). Paddle is out (digital goods only).
   Prices are entered in a base currency and converted with admin-set rates + per-currency rounding (manual override
   allowed); an order stores the currency and rate it was paid with. Money always carries a currency.
 - **Iran deployment:** hosted in Iran, SMS OTP + email login, external logins off. **No runtime dependency on external
-  services in any deployment** — self-host fonts, icons, scripts and images (no CDNs, no Google Fonts). The only
-  exception: marketing tags (GTM/GA4, Meta Pixel, Matomo) that the admin opts into, loaded only after cookie consent;
-  the site must work fully without them.
+  services in any deployment** — self-host fonts, icons, scripts and images (no CDNs, no Google Fonts, no
+  `next/font/google`). The only exception: marketing tags (GTM/GA4, Meta Pixel, Matomo) that the admin opts into,
+  loaded only after cookie consent; the site must work fully without them.
 - **SEO & marketing design: [docs/SEO-MARKETING.md](docs/SEO-MARKETING.md).** URLs `/{locale}/p/{number}/{slug}`
   (every locale prefixed, stable numeric product number, slug mismatch → 301), hreflang only for translated locales,
   JSON-LD, sitemaps, redirects, blog, product feeds (Google, Meta, Torob, Emalls), UTM attribution on orders.
@@ -43,116 +43,129 @@ Recorded decisions (details in the roadmap):
 
 ## Non-negotiable rules
 
-1. **Every new class gets a matching unit test** (.NET: `tests/`, xUnit; frontend: Vitest). Don't finish a task with
-   failing or missing tests.
-2. **SOLID / Clean Code**: thin endpoints/controllers, business logic in services behind interfaces, no logic in
-   views/components beyond presentation, small focused classes, constructor injection, `TimeProvider` instead of
-   `DateTime.UtcNow` in logic.
+1. **Every new class gets a matching unit test** (.NET: `tests/`, xUnit; frontend: Vitest, `*.test.ts(x)` next to
+   the file). Don't finish a task with failing or missing tests.
+2. **SOLID / Clean Code**: thin endpoints, business logic in Application services behind interfaces, no logic in
+   components beyond presentation, small focused classes, constructor injection, `TimeProvider` instead of
+   `DateTime.UtcNow` in logic. Dependencies point inward: Api → Infrastructure → Application → Domain.
 3. **Ownership checks (IDOR)**: any id from the URL, query, or request body must be checked against the current user
    in the query itself (`x.Id == id && x.CustomerId == userId`), returning 404 for others. Staff roles may bypass.
    Take the user id from claims, never from input. (This bug was fixed in the sister project BulkyWeb in both the
    cart and orders.)
-4. **No secrets in Git**: use `dotnet user-secrets` (UserSecretsId is set), `.env.local` (git-ignored) or environment
-   variables. Gateway/SMS keys go under configuration sections bound with the Options pattern.
+4. **No secrets in Git**: `dotnet user-secrets` (API and integration tests have UserSecretsIds), `deploy/.env` and
+   `.env*` files are git-ignored, environment variables in production. Gateway/SMS keys go under configuration
+   sections bound with the Options pattern.
 5. **Prices and totals are computed on the server**, never taken from the request. Payment success is confirmed only
    by server-side verify/webhook with signature validation.
 6. **Copyright**: the UI may be *inspired by* Digikala-style layouts, but never copy their logo, name, brand colors,
    icons, images, texts or CSS. Use our own palette, open-licensed icons and OFL fonts (e.g. Vazirmatn).
-7. **Identity generics always use `AppUser`**, never `IdentityUser` — including in scaffolded Identity pages
-   (scaffolding defaults to `IdentityUser`; this broke login/logout in BulkyWeb).
+7. **Identity generics always use `AppUser`**, never `IdentityUser` (this broke login/logout in BulkyWeb).
 8. **Every public page is SEO-complete**: server-rendered content (works without client JS), title, description,
    canonical, hreflang, `lang`/`dir`, valid JSON-LD matching the visible price/stock, no layout shift. Filter/sort
    URLs canonicalize to the unfiltered page; never change a public URL without a 301. Non-production instances are
    always `noindex`. Use the acceptance checklist at the end of `docs/SEO-MARKETING.md`.
 9. Keep packages free of known vulnerabilities: `dotnet list package --vulnerable --include-transitive` and
-   `npm audit`; pin a patched version directly when a transitive dependency is vulnerable.
+   `npm audit --omit=dev`; pin a patched version directly when a transitive dependency is vulnerable.
+10. **Nothing shop-specific at build time** (one image for all shops): store settings live in the API
+    (`Store` section); the web app reads them per request (`loadStore()`), and runtime env vars cover the rest.
+    Never read shop settings in `next.config.ts` or at module scope.
 
 ## Repository layout
 
 ```
-OnlineShopping-MVC.sln
-dotnet-tools.json                   # local tool manifest (dotnet-ef 10.0.14)
-docs/ROADMAP.md                     # phases + recorded decisions
-OnlineShopping-MVC/                 # backend (RootNamespace: OnlineShopping_MVC) -> becomes src/OnlineShop.Api
-  Program.cs                        # DI, pipeline, routes, startup migrate + seed
-  Data/
-    AppDbContext.cs                 # IdentityDbContext<AppUser>; Fluent API config, soft-delete filters
-    Interceptors/AuditableEntityInterceptor.cs   # CreatedUtc/ModifiedUtc + soft delete
-    DataSeeder.cs, SeedOptions.cs   # migrations (optional), roles, first admin from config
-  Migrations/PostgreSql/            # EF Core migrations for PostgreSQL (one folder/assembly per provider)
-  Models/Domain/                    # EF entities (all inherit BaseEntity)
-  Models/Identity/                  # AppUser, AppRoles
-  Controllers/, Views/, wwwroot/    # temporary MVC UI; wwwroot/lib is vendored, don't edit
-tests/OnlineShopping-MVC.Tests/     # xUnit; SQLite in-memory for EF tests
+OnlineShop.sln                      # all .NET projects
+Directory.Build.props               # net10.0, nullable, analyzers, warnings = errors
+Directory.Packages.props            # central NuGet versions (no Version= in csproj files)
+dotnet-tools.json                   # local tools (dotnet-ef 10.0.14)
+src/
+  OnlineShop.Domain/                # entities: Common/BaseEntity, Catalog/*, Sales/* — no dependencies
+  OnlineShop.Application/           # use cases (Catalog/CategoryQueries), Common/Result + AppError,
+                                    # IApplicationDbContext, StoreOptions, Authorization/AppRoles, AddApplication()
+  OnlineShop.Infrastructure/        # Persistence/AppDbContext (+ interceptor, seeding, DatabaseOptions),
+                                    # Identity/AppUser, AddInfrastructure() (EF, Identity, Data Protection, health)
+  OnlineShop.Infrastructure.Migrations.PostgreSql/   # EF migrations for PostgreSQL
+  OnlineShop.Api/                   # Program.cs, Endpoints/, Security/ (headers, reverse proxy), Common/ResultExtensions
+tests/
+  OnlineShop.UnitTests/             # xUnit; SQLite in-memory for EF; TestHost for middleware
+  OnlineShop.IntegrationTests/      # WebApplicationFactory + real PostgreSQL (fresh database per test class)
+apps/web/                           # Next.js 16 (see apps/web/README.md)
+  src/app/[locale]/                 # pages (root layout lives here: lang/dir per locale)
+  src/app/{robots,sitemap,manifest,icon}.ts(x), api/revalidate/route.ts
+  src/proxy.ts                      # runtime: API forwarding, locale redirects, security headers, noindex
+  src/lib/                          # api/ (typed client, `use cache` fetchers), store/, i18n/, seo/, security/, pwa/
+  openapi/OnlineShop.Api.json       # written by the API build; source of src/lib/api/schema.d.ts
+deploy/                             # api/web Dockerfiles, docker-compose.yml, .env.example, nginx.conf, README
+docs/                               # ROADMAP.md, SEO-MARKETING.md
 ```
 
 ## Commands
 
 ```bash
-dotnet build
-dotnet test
-dotnet run --project OnlineShopping-MVC                          # http://localhost:5087
-dotnet tool restore                                              # once, installs local dotnet-ef
-dotnet tool run dotnet-ef migrations add <Name> --project OnlineShopping-MVC --output-dir Migrations/PostgreSql
-dotnet tool run dotnet-ef database update --project OnlineShopping-MVC
-dotnet tool run dotnet-ef migrations has-pending-model-changes --project OnlineShopping-MVC
+# .NET
+dotnet tool restore
+dotnet build OnlineShop.sln                     # also regenerates apps/web/openapi/OnlineShop.Api.json
+dotnet test OnlineShop.sln
+dotnet test --filter "FullyQualifiedName~CategoryQueriesTests"
+dotnet run --project src/OnlineShop.Api         # http://localhost:5087 (migrates the dev DB in Development)
+dotnet tool run dotnet-ef migrations add <Name> --project src/OnlineShop.Infrastructure.Migrations.PostgreSql --startup-project src/OnlineShop.Api
+dotnet tool run dotnet-ef migrations has-pending-model-changes --project src/OnlineShop.Infrastructure.Migrations.PostgreSql --startup-project src/OnlineShop.Api
+
+# Next.js (in apps/web; Node is at C:\Program Files\nodejs — add it to PATH in Git Bash)
+npm run dev | npm test | npm run lint | npm run typecheck | npm run build
+npm run gen:api                                 # after any API contract change, then commit both files
+
+# Deploy (Docker)
+docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build
 ```
 
-Run a single test: `dotnet test --filter "FullyQualifiedName~AuditableEntityInterceptorTests"`.
+After a model change: add a migration, then `has-pending-model-changes` must report no changes.
+After an API contract change: build the API, run `npm run gen:api`, commit `openapi/*.json` and `schema.d.ts`
+(CI fails if either is stale).
 
-After any model change: add a migration, then run `has-pending-model-changes` (must report no changes).
+## Local environment (this dev machine)
 
-Local PostgreSQL 18: Windows service `postgresql-x64-18`, port 5432, `psql` at
-`C:\Program Files\PostgreSQL\18\bin\psql.exe`. The dev database `onlineshop_dev` is owned by the least-privilege
-login `onlineshop`; the app never connects as the `postgres` superuser.
+- PostgreSQL 18: service `postgresql-x64-18`, port 5432, `psql` at `C:\Program Files\PostgreSQL\18\bin\psql.exe`.
+  - `onlineshop_dev` is owned by the least-privilege login `onlineshop`; the API never uses the `postgres` superuser.
+  - `onlineshop_test` (CREATEDB) is used by integration tests, which create and drop `onlineshop_it_*` databases.
+- Secrets (never print them, never write them to tracked files):
+  - API user-secrets: `ConnectionStrings:Default`, `Postgres:SuperuserPassword` (admin tasks only),
+    optionally `Database:AdminEmail` / `Database:AdminPassword`.
+  - Integration-test user-secrets (`tests/OnlineShop.IntegrationTests`): `IntegrationTests:AdminConnection`
+    (CI uses the `INTEGRATIONTESTS__ADMINCONNECTION` env var).
+- No Docker on this machine yet; Docker images are built by CI.
+- The built-in browser pane does not allow service workers; check PWA behaviour in a real browser.
 
-## Configuration
+## Backend conventions
 
-- `ConnectionStrings:Default` — `appsettings.json` holds a password-less template; the real dev connection string
-  (user `onlineshop`) is in **user-secrets**, as is `Postgres:SuperuserPassword` (admin tasks only).
-  Never write either password into a tracked file or into chat output.
-- `Database:MigrateOnStartup` — `true` in Development; applies pending migrations at startup.
-- `Database:AdminEmail` / `Database:AdminPassword` — first admin account, set with user-secrets:
-  `dotnet user-secrets set "Database:AdminPassword" "<password>" --project OnlineShopping-MVC`.
-  Without them the seeder logs a warning and creates only roles.
-- Identity options in `Program.cs` (digit required, min length 6 — to be hardened in roadmap phase 2).
+- **Naming:** `UseSnakeCaseNamingConvention()`; Identity tables renamed to `users`, `roles`, … Raw SQL fragments
+  (index filters, check constraints) use snake_case and must be valid in PostgreSQL and SQLite (`is_deleted = false`).
+- **BaseEntity**: `Guid Id` (version 7), `CreatedUtc`, `ModifiedUtc?`, `IsDeleted` — stamped by
+  `AuditableEntityInterceptor`; `Remove()` is a soft delete; a global query filter hides deleted rows
+  (`IgnoreQueryFilters()` to see them). Unique indexes use `.HasFilter(NotDeletedFilter)`.
+- All `DateTime`s are UTC (`timestamptz`); all `decimal`s are `numeric(18,2)`.
+- User references (`Cart.CustomerId`, `Order.CustomerId`) are FKs to `users` without navigation properties
+  (domain stays free of Identity). Orders `Restrict`, carts cascade.
+- `OrderItem.ProductName`/`UnitPrice` are snapshots. `OrderStatus` is stored as text with a generated check constraint.
+- **Use cases** depend on `IApplicationDbContext`; read queries use `AsNoTracking()` + projection to records.
+- **Errors:** expected failures return `Result<T>` with an `AppError` (`ErrorKind` + stable `code` like
+  `category.not_found`); endpoints map them with `ToHttpResult()` to RFC 9457 problem details carrying `code`.
+- **Endpoints:** minimal APIs grouped under `/api/v1`, with `WithName` (becomes the OpenAPI operationId) and summary.
+- **Options:** bind + `ValidateDataAnnotations` + `ValidateOnStart`. Configuration lists merge by index across sources,
+  so list-like settings that operators override are comma-separated strings (see `StoreOptions.Locales`).
+- Logging via `[LoggerMessage]` source-generated methods (analyzer CA1848).
+- Code style: file-scoped namespaces, primary constructors, `sealed` by default, `required`/`= default!`.
 
-## Data model & persistence conventions
+## Frontend conventions (Next.js 16 — read node_modules/next/dist/docs before using unfamiliar APIs)
 
-- **Naming:** `UseSnakeCaseNamingConvention()` — tables/columns are `snake_case`; Identity tables are renamed to
-  `users`, `roles`, `user_roles`, ... in `ConfigureIdentityTables`. Raw SQL fragments (index filters, check
-  constraints) use the snake_case names, e.g. `is_deleted = false`.
-- **BaseEntity**: `Guid Id` (version 7, time-ordered), `CreatedUtc`, `ModifiedUtc?`, `IsDeleted`. Never set these by
-  hand — `AuditableEntityInterceptor` stamps them, and `Remove()` becomes a soft delete. A global query filter hides
-  deleted rows (`IgnoreQueryFilters()` to see them). Only *tracked* cascade dependents are soft-deleted with the parent.
-- All `DateTime` values are UTC (`timestamptz` in PostgreSQL; Npgsql rejects non-UTC kinds).
-- New `BaseEntity` types get the soft-delete filter automatically (`ApplySoftDeleteQueryFilters`).
-- Unique indexes use `.HasFilter(NotDeletedFilter)` so soft-deleted rows don't block reuse (Slug, SKU, cart).
-- All `decimal` columns are `numeric(18,2)` by convention (`ConfigureConventions`).
-- User references (`Cart.CustomerId`, `Order.CustomerId`) are FKs to `users` **without navigation properties**, to
-  keep the domain free of Identity. Orders use `Restrict`; carts cascade.
-- `OrderItem.ProductName` / `UnitPrice` are snapshots at order time — never read current product data for old orders.
-- `OrderStatus` is stored as a string; the `CK_Orders_Status` check constraint is generated from the enum
-  (`BuildOrderStatusCheckSql`), so adding a value only needs a new migration.
-- Configure everything with Fluent API in `AppDbContext`, one private `Configure*` method per area.
-- Catalog: Category -> SubCategory (`Groups`) -> ProductGroup -> Product -> ProductImage (cascade).
-
-## Code style
-
-- C# with `Nullable` and `ImplicitUsings`; file-scoped namespaces; primary constructors for DI.
-- Namespace root `OnlineShopping_MVC` (underscore); folder/project name `OnlineShopping-MVC` (hyphen).
-- `required` for mandatory strings, `= default!` for navigations, collections initialized with `new List<T>()`.
-- Use `AppRoles` constants (`AppRoles.All`, `AppRoles.Staff`) in authorization, never string literals.
-- `internal` members used by tests are visible via `InternalsVisibleTo` (`OnlineShopping-MVC.Tests`).
-- Cross-platform only: no Windows-specific paths, registry, Windows auth or `Trusted_Connection`.
-
-## Testing
-
-- xUnit + `Microsoft.Extensions.TimeProvider.Testing` (`FakeTimeProvider`).
-- EF tests use `TestSupport/SqliteTestDatabase` (relational SQLite in-memory built from the real model, with the same
-  snake_case convention) — not the EF InMemory provider, which ignores FKs, unique indexes and check constraints.
-  Keep raw SQL fragments valid in both PostgreSQL and SQLite. Phase 1 adds integration tests on real PostgreSQL.
-- Test names describe behavior: `Remove_soft_deletes_the_row_instead_of_deleting_it`.
+- Cache Components + Partial Prefetching are on. Data fetchers use `"use cache"` + `cacheTag` + `cacheLife`;
+  invalidate with `revalidateTag(tag, "max")` (two arguments in v16) via `POST /api/revalidate`.
+- Anything store-specific or runtime-env-dependent is read inside `<Suspense>` after `await connection()`
+  (`loadStore()` does this), so the build never needs the API.
+- `middleware` is now `proxy` (`src/proxy.ts`). Nonce-based CSP is incompatible with prerendering, so the CSP is
+  static with `'unsafe-inline'` scripts and everything else locked to `'self'`.
+- Server-only modules import `"server-only"`; the API is called only from the server (`apiGet`), never from the browser.
+- UI strings: `src/lib/i18n/dictionaries/<locale>.json`, all with the same keys as `fa.json` (enforced by a test).
+- Tests: Vitest (`environment: node`; `// @vitest-environment jsdom` for components) + Testing Library.
 
 ## Commits
 
