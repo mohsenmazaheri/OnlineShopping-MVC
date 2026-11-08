@@ -201,7 +201,7 @@ public sealed class AccountService(
             : AppError.Validation(AccountErrors.PasswordRejected, "The new password does not meet the requirements.");
     }
 
-    private async Task SendConfirmationAsync(string userId, string email, string locale, CancellationToken cancellationToken)
+    internal async Task SendConfirmationAsync(string userId, string email, string locale, CancellationToken cancellationToken)
     {
         var token = await identity.CreateEmailConfirmationTokenAsync(userId);
         if (token is null)
@@ -216,7 +216,7 @@ public sealed class AccountService(
     internal Uri BuildLink(string locale, string path, string userId, string token) =>
         new($"{_store.PublicUrl.TrimEnd('/')}/{locale}/{path}?userId={Uri.EscapeDataString(userId)}&token={Uri.EscapeDataString(token)}");
 
-    private string ResolveLocale(string? requested) =>
+    internal string ResolveLocale(string? requested) =>
         requested is not null && _store.LocaleList.Contains(requested) ? requested : _store.DefaultLocale;
 
     private async Task<Result<CurrentUser>> CurrentUserOrNotFound(string userId)

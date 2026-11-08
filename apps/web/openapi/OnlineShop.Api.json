@@ -521,6 +521,180 @@
           }
         }
       }
+    },
+    "/api/v1/account/external": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Providers this shop offers and the ones linked to the signed-in account.",
+        "operationId": "GetExternalLogins",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalLoginsView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/external/{provider}/start": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Browser navigation: redirects to the provider's sign-in page.",
+        "operationId": "StartExternalSignIn",
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "returnUrl",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/account/external/callback": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Browser navigation: end of the provider round trip; signs in and redirects into the storefront.",
+        "operationId": "ExternalSignInCallback",
+        "parameters": [
+          {
+            "name": "returnUrl",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/account/external/{provider}/link": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Browser navigation: link a provider to the signed-in account.",
+        "operationId": "StartExternalLink",
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/account/external/link-callback": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Browser navigation: end of the link round trip.",
+        "operationId": "ExternalLinkCallback",
+        "parameters": [
+          {
+            "name": "locale",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/account/external/{provider}/unlink": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Unlink a provider (refused when it is the account's only way to sign in).",
+        "operationId": "UnlinkExternalLogin",
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalLoginsView"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -643,6 +817,27 @@
           },
           "isStaff": {
             "type": "boolean"
+          }
+        }
+      },
+      "ExternalLoginsView": {
+        "required": [
+          "available",
+          "linked"
+        ],
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "linked": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -913,7 +1108,8 @@
       "SignInMethods": {
         "required": [
           "password",
-          "phoneCode"
+          "phoneCode",
+          "external"
         ],
         "type": "object",
         "properties": {
@@ -922,6 +1118,12 @@
           },
           "phoneCode": {
             "type": "boolean"
+          },
+          "external": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "description": "Sign-in methods currently available (SMS codes need a configured SMS provider)."

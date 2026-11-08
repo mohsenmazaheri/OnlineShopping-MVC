@@ -165,6 +165,82 @@ public sealed class IdentityAccountService(
         return user is not null && await users.IsLockedOutAsync(user);
     }
 
+    public async Task<string?> FindUserIdByEmailAsync(string email) => (await users.FindByEmailAsync(email))?.Id;
+
+    public async Task<string?> FindUserIdByExternalLoginAsync(string provider, string providerKey) =>
+        (await users.FindByLoginAsync(ExternalSchemes.For(provider), providerKey))?.Id;
+
+    public async Task<IdentityCreateResult> CreateExternalCustomerAsync(string email, bool emailConfirmed, string? displayName, string? locale)
+    {
+        var user = new AppUser
+        {
+            UserName = Guid.CreateVersion7().ToString("N"),
+            Email = email,
+            EmailConfirmed = emailConfirmed,
+            DisplayName = displayName,
+            PreferredLocale = locale,
+            CreatedUtc = clock.GetUtcNow().UtcDateTime,
+            LockoutEnabled = true
+        };
+
+        var created = await users.CreateAsync(user);
+        if (!created.Succeeded)
+            return IdentityCreateResult.Failed(created.Errors.Select(e => e.Code).ToList());
+
+        var role = await users.AddToRoleAsync(user, AppRoles.Customer);
+        if (!role.Succeeded)
+            throw new InvalidOperationException("Could not add the new user to the Customer role: " +
+                                                string.Join("; ", role.Errors.Select(e => e.Code)));
+        return IdentityCreateResult.Success(user.Id);
+    }
+
+    public async Task<IdentityCreateResult> AddExternalLoginAsync(string userId, string provider, string providerKey, string? displayName)
+    {
+        var user = await users.FindByIdAsync(userId);
+        if (user is null)
+            return IdentityCreateResult.Failed(["NotFound"]);
+
+        var scheme = ExternalSchemes.For(provider);
+        var result = await users.AddLoginAsync(user, new UserLoginInfo(scheme, providerKey, displayName ?? scheme));
+        return result.Succeeded
+            ? IdentityCreateResult.Success(user.Id)
+            : IdentityCreateResult.Failed(result.Errors.Select(e => e.Code).ToList());
+    }
+
+    public async Task<IReadOnlyList<string>> GetExternalLoginsAsync(string userId)
+    {
+        var user = await users.FindByIdAsync(userId);
+        if (user is null)
+            return [];
+        return (await users.GetLoginsAsync(user))
+            .Select(l => ExternalSchemes.ProviderForScheme(l.LoginProvider))
+            .OfType<string>()
+            .Distinct()
+            .ToList();
+    }
+
+    public async Task<IdentityCreateResult> RemoveExternalLoginAsync(string userId, string provider)
+    {
+        var user = await users.FindByIdAsync(userId);
+        if (user is null)
+            return IdentityCreateResult.Failed(["NotFound"]);
+
+        var scheme = ExternalSchemes.For(provider);
+        foreach (var login in (await users.GetLoginsAsync(user)).Where(l => l.LoginProvider == scheme))
+        {
+            var result = await users.RemoveLoginAsync(user, login.LoginProvider, login.ProviderKey);
+            if (!result.Succeeded)
+                return IdentityCreateResult.Failed(result.Errors.Select(e => e.Code).ToList());
+        }
+        return IdentityCreateResult.Success(user.Id);
+    }
+
+    public async Task<bool> HasPasswordAsync(string userId)
+    {
+        var user = await users.FindByIdAsync(userId);
+        return user is not null && await users.HasPasswordAsync(user);
+    }
+
     public async Task<IdentityCreateResult> SetConfirmedPhoneAsync(string userId, string phoneE164)
     {
         var user = await users.FindByIdAsync(userId);

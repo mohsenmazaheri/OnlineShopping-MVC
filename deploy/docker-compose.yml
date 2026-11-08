@@ -53,6 +53,13 @@ services:
       Email__SmtpPort: ${SMTP_PORT:-587}
       Email__SmtpUser: ${SMTP_USER:-}
       Email__SmtpPassword: ${SMTP_PASSWORD:-}
+      # External sign-in (optional; a provider is offered only when both values are set)
+      Auth__External__Google__ClientId: ${GOOGLE_CLIENT_ID:-}
+      Auth__External__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET:-}
+      Auth__External__Facebook__ClientId: ${FACEBOOK_APP_ID:-}
+      Auth__External__Facebook__ClientSecret: ${FACEBOOK_APP_SECRET:-}
+      Auth__External__Microsoft__ClientId: ${MICROSOFT_CLIENT_ID:-}
+      Auth__External__Microsoft__ClientSecret: ${MICROSOFT_CLIENT_SECRET:-}
       # SMS (optional): None | Kavenegar | SmsIr | Twilio
       Sms__Provider: ${SMS_PROVIDER:-None}
       Sms__Kavenegar__ApiKey: ${KAVENEGAR_API_KEY:-}

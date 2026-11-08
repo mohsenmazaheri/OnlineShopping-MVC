@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
@@ -51,6 +52,7 @@ public static class DependencyInjection
         AddIdentityAndAuth(services, configuration);
         AddEmail(services, configuration);
         AddSms(services, configuration);
+        AddExternalLogins(services, configuration);
 
         // Keys in the database: survive restarts and container replacement, shared by every app instance.
         var dataProtection = services.AddDataProtection().SetApplicationName("OnlineShop");
@@ -141,6 +143,64 @@ public static class DependencyInjection
             sp.GetRequiredService<IOptions<EmailOptions>>().Value.Delivery == EmailDelivery.Smtp
                 ? sp.GetRequiredService<SmtpEmailSender>()
                 : sp.GetRequiredService<PickupDirectoryEmailSender>());
+    }
+
+    private static void AddExternalLogins(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddOptions<ExternalLoginOptions>().Bind(configuration.GetSection(ExternalLoginOptions.SectionName));
+        services.AddSingleton<IExternalLoginProviders, ConfiguredExternalProviders>();
+        services.AddHttpContextAccessor();
+        services.AddScoped<ExternalAuthGateway>();
+
+        // All three handlers are always registered (the image is shared by every shop); a provider without
+        // credentials gets a placeholder and is never offered or challenged (see IExternalLoginProviders).
+        services.AddAuthentication()
+            .AddGoogle(ExternalSchemes.For(ExternalProviders.Google), _ => { })
+            .AddFacebook(ExternalSchemes.For(ExternalProviders.Facebook), _ => { })
+            .AddMicrosoftAccount(ExternalSchemes.For(ExternalProviders.Microsoft), _ => { });
+
+        static void Common(RemoteAuthenticationOptions o, string provider, ExternalLoginOptions ext, AuthOptions auth)
+        {
+            o.SignInScheme = IdentityConstants.ExternalScheme;
+            o.CallbackPath = ExternalSchemes.CallbackPath(provider);
+            // Lax works for the provider's top-level redirect back, and also on plain-HTTP test instances.
+            o.CorrelationCookie.SameSite = SameSiteMode.Lax;
+            o.CorrelationCookie.SecurePolicy = auth.SecureCookies ? CookieSecurePolicy.Always : CookieSecurePolicy.SameAsRequest;
+            // Cancelled at the provider, expired or forged state: back to the login page with a message instead of a 500.
+            o.Events.OnRemoteFailure = context =>
+            {
+                var locale = context.HttpContext.RequestServices.GetRequiredService<IOptions<OnlineShop.Application.Common.StoreOptions>>().Value.DefaultLocale;
+                context.Response.Redirect($"/{locale}/account/login?error=external_failed");
+                context.HandleResponse();
+                return Task.CompletedTask;
+            };
+        }
+
+        services.AddOptions<Microsoft.AspNetCore.Authentication.Google.GoogleOptions>(ExternalSchemes.For(ExternalProviders.Google))
+            .Configure<IOptions<ExternalLoginOptions>, IOptions<AuthOptions>>((o, ext, auth) =>
+            {
+                var c = ext.Value.Google;
+                o.ClientId = c.IsConfigured ? c.ClientId! : "not-configured";
+                o.ClientSecret = c.IsConfigured ? c.ClientSecret! : "not-configured";
+                o.ClaimActions.MapJsonKey("email_verified", "email_verified");
+                Common(o, ExternalProviders.Google, ext.Value, auth.Value);
+            });
+        services.AddOptions<Microsoft.AspNetCore.Authentication.Facebook.FacebookOptions>(ExternalSchemes.For(ExternalProviders.Facebook))
+            .Configure<IOptions<ExternalLoginOptions>, IOptions<AuthOptions>>((o, ext, auth) =>
+            {
+                var c = ext.Value.Facebook;
+                o.AppId = c.IsConfigured ? c.ClientId! : "not-configured";
+                o.AppSecret = c.IsConfigured ? c.ClientSecret! : "not-configured";
+                Common(o, ExternalProviders.Facebook, ext.Value, auth.Value);
+            });
+        services.AddOptions<Microsoft.AspNetCore.Authentication.MicrosoftAccount.MicrosoftAccountOptions>(ExternalSchemes.For(ExternalProviders.Microsoft))
+            .Configure<IOptions<ExternalLoginOptions>, IOptions<AuthOptions>>((o, ext, auth) =>
+            {
+                var c = ext.Value.Microsoft;
+                o.ClientId = c.IsConfigured ? c.ClientId! : "not-configured";
+                o.ClientSecret = c.IsConfigured ? c.ClientSecret! : "not-configured";
+                Common(o, ExternalProviders.Microsoft, ext.Value, auth.Value);
+            });
     }
 
     private static void AddSms(IServiceCollection services, IConfiguration configuration)

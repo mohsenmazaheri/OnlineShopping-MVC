@@ -37,6 +37,13 @@ public static class AccountErrors
     public const string CodeLimitReached = "account.code_limit_reached";
     public const string SmsDisabled = "account.sms_disabled";
     public const string SmsFailed = "account.sms_failed";
+    public const string ExternalProviderDisabled = "account.external_provider_disabled";
+    public const string ExternalFailed = "account.external_failed";
+    public const string ExternalNoEmail = "account.external_no_email";
+    public const string ExternalEmailInUse = "account.external_email_in_use";
+    public const string ExternalLoginInUse = "account.external_login_in_use";
+    public const string ExternalNotLinked = "account.external_not_linked";
+    public const string ExternalLastMethod = "account.external_last_method";
 }
 
 /// <summary>Password rules shared by registration and reset (Identity enforces the same rules again).</summary>

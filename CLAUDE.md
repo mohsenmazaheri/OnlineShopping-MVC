@@ -185,6 +185,16 @@ After an API contract change: build the API, run `npm run gen:api`, commit `open
   (`PhoneCodes` options: length, lifetime, cooldown, attempts, hourly cap); only salted hashes are stored
   (`phone_verification_codes`). A lockout also blocks code sign-in. Rate limits return `ErrorKind.TooManyRequests` → 429.
 - Tests that depend on time replace the DI `TimeProvider` with `FakeTimeProvider` instead of sleeping.
+- External sign-in (Google/Facebook/Microsoft): `ExternalLoginService` (Application) holds the rules; an existing
+  account is linked automatically **only** when the provider verified the email (only Google's `email_verified` is
+  trusted — see `ExternalAuthGateway.Map`), otherwise `external_email_in_use`. The last sign-in method cannot be
+  unlinked. All three handlers are always registered; a provider without credentials (`Auth:External:*`) gets a
+  placeholder and is never offered (`IExternalLoginProviders`). OAuth callback path:
+  `/api/v1/account/external/{provider}/oauth-callback` (under /api/v1 so the web proxy forwards it); remote failures
+  redirect to `/{locale}/account/login?error=external_failed`.
+- `PublicOriginMiddleware` makes the API see `Store:PublicUrl`'s scheme and host, so absolute URLs (OAuth redirect_uri)
+  and Secure cookies follow the storefront. Integration tests therefore use an `http://` public URL.
+- Browser redirects back into the storefront go through `ReturnPaths.Sanitize` (no open redirects).
 - Web: forms post JSON to `/api/v1/account/*` from the browser (`postJson`); server components read the user with
   `getCurrentUser()` (forwards only the session cookie, never cached). `proxy.ts` redirects signed-out visitors away
   from private `/{locale}/account/*` pages; `safeReturnPath()` prevents open redirects.

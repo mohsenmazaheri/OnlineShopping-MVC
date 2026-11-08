@@ -61,6 +61,7 @@ builder.Services.AddHsts(options =>
 var app = builder.Build();
 
 app.UseForwardedHeaders();
+app.UseMiddleware<PublicOriginMiddleware>();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseMiddleware<SecurityHeadersMiddleware>();
@@ -87,6 +88,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 
 app.MapStoreEndpoints();
 app.MapAccountEndpoints();
+app.MapExternalLoginEndpoints();
 
 // Build-time OpenAPI generation starts the app without a database: skip migrations and seeding there.
 if (!isOpenApiGeneration)

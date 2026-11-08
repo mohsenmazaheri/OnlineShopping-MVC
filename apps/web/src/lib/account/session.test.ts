@@ -7,7 +7,7 @@ vi.mock("next/headers", () => ({
   }),
 }));
 
-import { getCurrentUser } from "./session";
+import { getCurrentUser, getExternalLogins } from "./session";
 
 describe("getCurrentUser (server rendering)", () => {
   afterEach(() => cookieStore.clear());
@@ -36,5 +36,24 @@ describe("getCurrentUser (server rendering)", () => {
 
     expect(await getCurrentUser(vi.fn().mockResolvedValue(new Response(null, { status: 401 })))).toBeNull();
     expect(await getCurrentUser(vi.fn().mockRejectedValue(new Error("ECONNREFUSED")))).toBeNull();
+  });
+});
+
+describe("getExternalLogins", () => {
+  afterEach(() => cookieStore.clear());
+
+  it("asks the API with the session cookie and returns the providers", async () => {
+    cookieStore.set("os_session", "abc");
+    const view = { available: ["google"], linked: [] };
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(view), { status: 200 }));
+
+    expect(await getExternalLogins(fetchMock)).toEqual(view);
+    expect(fetchMock).toHaveBeenCalledWith(expect.stringMatching(/\/api\/v1\/account\/external$/), expect.objectContaining({ cache: "no-store" }));
+  });
+
+  it("returns null without a session or when the API fails", async () => {
+    expect(await getExternalLogins(vi.fn())).toBeNull();
+    cookieStore.set("os_session", "abc");
+    expect(await getExternalLogins(vi.fn().mockResolvedValue(new Response(null, { status: 401 })))).toBeNull();
   });
 });

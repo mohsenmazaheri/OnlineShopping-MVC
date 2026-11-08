@@ -77,7 +77,8 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         });
     }
 
-    public const string PublicUrl = "https://shop.test";
+    /// <summary>Plain HTTP like the test client: an https public address would make the API mark cookies Secure.</summary>
+    public const string PublicUrl = "http://shop.test";
 
     /// <summary>Emails the API sent during this test class.</summary>
     public CapturingEmailSender Emails { get; } = new();

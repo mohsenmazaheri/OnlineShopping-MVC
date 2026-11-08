@@ -88,7 +88,14 @@
       "code_cooldown": "Bitte warten Sie kurz, bevor Sie einen neuen Code anfordern.",
       "code_limit_reached": "An diese Nummer wurden zu viele Codes gesendet. Versuchen Sie es in einer Stunde erneut.",
       "sms_disabled": "Die Anmeldung per SMS ist in diesem Shop nicht verfügbar.",
-      "sms_failed": "Die SMS konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
+      "sms_failed": "Die SMS konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+      "external_provider_disabled": "Diese Anmeldemethode ist nicht verfügbar.",
+      "external_failed": "Die Anmeldung mit diesem Dienst hat nicht geklappt. Bitte versuchen Sie es erneut.",
+      "external_no_email": "Dieser Dienst hat Ihre E-Mail-Adresse nicht übermittelt. Bitte registrieren Sie sich auf andere Weise.",
+      "external_email_in_use": "Es gibt ein Konto mit dieser E-Mail-Adresse. Melden Sie sich zuerst dort an und verknüpfen Sie den Dienst dann auf Ihrer Kontoseite.",
+      "external_login_in_use": "Dieses Konto ist mit einem anderen Benutzer verknüpft.",
+      "external_not_linked": "Dieser Dienst ist nicht verknüpft.",
+      "external_last_method": "Dies ist Ihre einzige Anmeldemethode. Fügen Sie zuerst ein Passwort oder eine Handynummer hinzu."
     },
     "withCode": "Mit SMS-Code",
     "withPassword": "Mit Passwort",
@@ -104,6 +111,12 @@
     "addPhoneTitle": "Handynummer hinzufügen",
     "addPhoneSave": "Bestätigen und speichern",
     "phoneSaved": "Ihre Handynummer wurde gespeichert.",
-    "welcome": "Willkommen! Ihr Konto wurde erstellt."
+    "welcome": "Willkommen! Ihr Konto wurde erstellt.",
+    "continueWith": "Weiter mit {provider}",
+    "or": "oder",
+    "linkedAccounts": "Verknüpfte Konten",
+    "link": "Verknüpfen",
+    "unlink": "Trennen",
+    "linkedOk": "{provider} ist jetzt verknüpft."
   }
 }

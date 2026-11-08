@@ -1,5 +1,8 @@
 import { isLocale, supportedLocales, type Locale } from "@/lib/i18n/config";
 
+/** External sign-in providers this web build has buttons for (slugs from the API). */
+export const externalProviders = ["google", "facebook", "microsoft"] as const;
+
 /**
  * Store settings as the web app uses them. The API is the single source of truth (Store section of its
  * configuration); the same Docker image serves every shop because these are read at request time.
@@ -11,7 +14,7 @@ export type StoreSettings = {
   /** Sign-up methods offered (phone only when an SMS provider is configured). */
   signUp: { email: boolean; phone: boolean };
   /** Sign-in methods offered (SMS codes only when an SMS provider is configured). */
-  signIn: { password: boolean; phoneCode: boolean };
+  signIn: { password: boolean; phoneCode: boolean; external: string[] };
 };
 
 export type StoreInfoLike = {
@@ -19,7 +22,7 @@ export type StoreInfoLike = {
   defaultLocale?: string | null;
   locales?: readonly string[] | null;
   signUp?: { email?: boolean | null; phone?: boolean | null } | null;
-  signIn?: { password?: boolean | null; phoneCode?: boolean | null } | null;
+  signIn?: { password?: boolean | null; phoneCode?: boolean | null; external?: readonly string[] | null } | null;
 };
 
 /** Used when the API cannot be reached, so pages and redirects still work. */
@@ -28,7 +31,7 @@ export const fallbackStore: StoreSettings = {
   defaultLocale: "fa",
   locales: [...supportedLocales],
   signUp: { email: true, phone: false },
-  signIn: { password: true, phoneCode: false },
+  signIn: { password: true, phoneCode: false, external: [] },
 };
 
 /** Validates API data: drops locales this web build cannot render and keeps the default among the locales. */
@@ -37,7 +40,11 @@ export function toStoreSettings(info: StoreInfoLike | null | undefined): StoreSe
 
   const name = info.name?.trim() || fallbackStore.name;
   const signUp = { email: info.signUp?.email ?? true, phone: info.signUp?.phone ?? false };
-  const signIn = { password: info.signIn?.password ?? true, phoneCode: info.signIn?.phoneCode ?? false };
+  const signIn = {
+    password: info.signIn?.password ?? true,
+    phoneCode: info.signIn?.phoneCode ?? false,
+    external: (info.signIn?.external ?? []).filter((p) => (externalProviders as readonly string[]).includes(p)),
+  };
 
   const locales = [...new Set((info.locales ?? []).filter(isLocale))];
   if (locales.length === 0) return { ...fallbackStore, name, signUp, signIn };

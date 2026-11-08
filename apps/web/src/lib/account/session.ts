@@ -26,3 +26,21 @@ export async function getCurrentUser(fetchImpl: typeof fetch = fetch): Promise<C
     return null;
   }
 }
+
+export type ExternalLoginsView = components["schemas"]["ExternalLoginsView"];
+
+/** Providers the shop offers and the ones linked to the signed-in account (per user, never cached). */
+export async function getExternalLogins(fetchImpl: typeof fetch = fetch): Promise<ExternalLoginsView | null> {
+  const session = (await cookies()).get(sessionCookieName);
+  if (!session) return null;
+  try {
+    const response = await fetchImpl(`${apiBaseUrl()}/api/v1/account/external`, {
+      headers: { Accept: "application/json", Cookie: `${sessionCookieName}=${session.value}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5000),
+    });
+    return response.ok ? ((await response.json()) as ExternalLoginsView) : null;
+  } catch {
+    return null;
+  }
+}

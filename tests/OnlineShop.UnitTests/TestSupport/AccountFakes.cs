@@ -61,7 +61,7 @@ internal sealed class FakeAccountIdentity : IAccountIdentity
         var user = Users.SingleOrDefault(u => u.Id == userId);
         return Task.FromResult(user is null
             ? null
-            : new CurrentUser(user.Id, null, user.Email, user.EmailConfirmed, user.Phone, false, user.Locale, ["Customer"], []));
+            : new CurrentUser(user.Id, null, user.Email, user.EmailConfirmed, user.Phone, user.Phone is not null, user.Locale, ["Customer"], []));
     }
 
     public Task<string?> CreateEmailConfirmationTokenAsync(string userId) =>
@@ -83,6 +83,42 @@ internal sealed class FakeAccountIdentity : IAccountIdentity
     }
 
     public bool LockedOut { get; set; }
+
+    /// <summary>(UserId, Provider, ProviderKey) external logins.</summary>
+    public List<(string UserId, string Provider, string Key)> Logins { get; } = [];
+
+    public Task<string?> FindUserIdByEmailAsync(string email) =>
+        Task.FromResult(Users.SingleOrDefault(u => string.Equals(u.Email, email, StringComparison.OrdinalIgnoreCase))?.Id);
+
+    public Task<string?> FindUserIdByExternalLoginAsync(string provider, string providerKey) =>
+        Task.FromResult<string?>(Logins.SingleOrDefault(l => l.Provider == provider && l.Key == providerKey).UserId);
+
+    public Task<IdentityCreateResult> CreateExternalCustomerAsync(string email, bool emailConfirmed, string? displayName, string? locale)
+    {
+        var user = new User($"u{Users.Count + 1}", email, null, "", locale) { EmailConfirmed = emailConfirmed, CurrentPassword = null };
+        Users.Add(user);
+        return Task.FromResult(IdentityCreateResult.Success(user.Id));
+    }
+
+    public Task<IdentityCreateResult> AddExternalLoginAsync(string userId, string provider, string providerKey, string? displayName)
+    {
+        if (Logins.Any(l => l.Provider == provider && l.Key == providerKey))
+            return Task.FromResult(IdentityCreateResult.Failed(["LoginAlreadyAssociated"]));
+        Logins.Add((userId, provider, providerKey));
+        return Task.FromResult(IdentityCreateResult.Success(userId));
+    }
+
+    public Task<IReadOnlyList<string>> GetExternalLoginsAsync(string userId) =>
+        Task.FromResult<IReadOnlyList<string>>(Logins.Where(l => l.UserId == userId).Select(l => l.Provider).Distinct().ToList());
+
+    public Task<IdentityCreateResult> RemoveExternalLoginAsync(string userId, string provider)
+    {
+        Logins.RemoveAll(l => l.UserId == userId && l.Provider == provider);
+        return Task.FromResult(IdentityCreateResult.Success(userId));
+    }
+
+    public Task<bool> HasPasswordAsync(string userId) =>
+        Task.FromResult(!string.IsNullOrEmpty(Users.SingleOrDefault(u => u.Id == userId)?.CurrentPassword));
 
     public Task<string?> FindUserIdByPhoneAsync(string phoneE164, CancellationToken cancellationToken = default) =>
         Task.FromResult(Users.SingleOrDefault(u => u.Phone == phoneE164)?.Id);

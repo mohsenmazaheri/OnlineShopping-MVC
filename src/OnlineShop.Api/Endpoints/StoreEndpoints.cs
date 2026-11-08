@@ -11,7 +11,7 @@ namespace OnlineShop.Api.Endpoints;
 public sealed record SignUpMethods(bool Email, bool Phone);
 
 /// <summary>Sign-in methods currently available (SMS codes need a configured SMS provider).</summary>
-public sealed record SignInMethods(bool Password, bool PhoneCode);
+public sealed record SignInMethods(bool Password, bool PhoneCode, IReadOnlyList<string> External);
 
 public sealed record StoreInfoResponse(string Name, string DefaultLocale, IReadOnlyList<string> Locales, SignUpMethods SignUp, SignInMethods SignIn);
 
@@ -22,11 +22,11 @@ public static class StoreEndpoints
     {
         var group = app.MapGroup("/api/v1").WithTags("Storefront");
 
-        group.MapGet("/store", (IOptions<StoreOptions> options, IOptions<AuthOptions> auth, ISmsCapability sms) =>
+        group.MapGet("/store", (IOptions<StoreOptions> options, IOptions<AuthOptions> auth, ISmsCapability sms, IExternalLoginProviders external) =>
             {
                 var store = options.Value;
                 var signUp = new SignUpMethods(auth.Value.EmailSignUp, auth.Value.PhoneSignUp && sms.IsEnabled);
-                var signIn = new SignInMethods(Password: true, PhoneCode: sms.IsEnabled);
+                var signIn = new SignInMethods(Password: true, PhoneCode: sms.IsEnabled, External: external.Enabled);
                 return TypedResults.Ok(new StoreInfoResponse(store.Name, store.DefaultLocale, store.LocaleList, signUp, signIn));
             })
             .WithName("GetStoreInfo")

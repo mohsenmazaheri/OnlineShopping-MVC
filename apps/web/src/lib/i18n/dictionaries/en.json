@@ -88,7 +88,14 @@
       "code_cooldown": "Please wait a moment before asking for another code.",
       "code_limit_reached": "Too many codes were sent to this number. Try again in an hour.",
       "sms_disabled": "Sign-in by SMS is not available in this shop.",
-      "sms_failed": "The SMS could not be sent. Please try again."
+      "sms_failed": "The SMS could not be sent. Please try again.",
+      "external_provider_disabled": "This sign-in method is not available.",
+      "external_failed": "Signing in with this service did not work. Please try again.",
+      "external_no_email": "This service did not share your email. Please sign up another way.",
+      "external_email_in_use": "An account with this email exists. Sign in to it first, then link this service from your account page.",
+      "external_login_in_use": "This account is linked to another user.",
+      "external_not_linked": "This service is not linked.",
+      "external_last_method": "This is your only way to sign in. Add a password or a mobile number first."
     },
     "withCode": "With an SMS code",
     "withPassword": "With a password",
@@ -104,6 +111,12 @@
     "addPhoneTitle": "Add a mobile number",
     "addPhoneSave": "Verify and save",
     "phoneSaved": "Your mobile number was saved.",
-    "welcome": "Welcome! Your account was created."
+    "welcome": "Welcome! Your account was created.",
+    "continueWith": "Continue with {provider}",
+    "or": "or",
+    "linkedAccounts": "Linked accounts",
+    "link": "Link",
+    "unlink": "Unlink",
+    "linkedOk": "{provider} is now linked."
   }
 }

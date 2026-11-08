@@ -9,14 +9,14 @@ describe("store settings from the API", () => {
         defaultLocale: "en",
         locales: ["fa", "en"],
         signUp: { email: true, phone: true },
-        signIn: { password: true, phoneCode: true },
+        signIn: { password: true, phoneCode: true, external: ["google"] },
       }),
     ).toEqual({
       name: "Shop",
       defaultLocale: "en",
       locales: ["fa", "en"],
       signUp: { email: true, phone: true },
-      signIn: { password: true, phoneCode: true },
+      signIn: { password: true, phoneCode: true, external: ["google"] },
     });
   });
 
@@ -31,12 +31,24 @@ describe("store settings from the API", () => {
   it("assumes email sign-up only when the API does not say", () => {
     const settings = toStoreSettings({ name: "S", locales: ["en"] });
     expect(settings.signUp).toEqual({ email: true, phone: false });
-    expect(settings.signIn).toEqual({ password: true, phoneCode: false });
+    expect(settings.signIn).toEqual({ password: true, phoneCode: false, external: [] });
   });
 
   it("falls back when the API is unreachable or returns nothing usable", () => {
     expect(toStoreSettings(null)).toEqual(fallbackStore);
     expect(toStoreSettings({ name: "Mine", locales: ["xx"] })).toEqual({ ...fallbackStore, name: "Mine" });
     expect(toStoreSettings({ name: "  ", locales: ["en"] }).name).toBe(fallbackStore.name);
+  });
+});
+
+describe("external providers from the API", () => {
+  it("keeps only providers this web build has buttons for", () => {
+    const settings = toStoreSettings({ name: "S", locales: ["en"], signIn: { external: ["google", "myspace", "microsoft"] } });
+
+    expect(settings.signIn.external).toEqual(["google", "microsoft"]);
+  });
+
+  it("offers none when the API says nothing", () => {
+    expect(toStoreSettings({ name: "S", locales: ["en"] }).signIn.external).toEqual([]);
   });
 });

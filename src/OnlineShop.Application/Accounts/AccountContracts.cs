@@ -88,6 +88,22 @@ public interface IAccountIdentity
 
     /// <summary>Sets a verified phone number on an existing account (fails with DuplicatePhoneNumber when taken).</summary>
     Task<IdentityCreateResult> SetConfirmedPhoneAsync(string userId, string phoneE164);
+
+    Task<string?> FindUserIdByEmailAsync(string email);
+
+    Task<string?> FindUserIdByExternalLoginAsync(string provider, string providerKey);
+
+    /// <summary>Creates a customer from an external login's email (no password; signs in with the provider).</summary>
+    Task<IdentityCreateResult> CreateExternalCustomerAsync(string email, bool emailConfirmed, string? displayName, string? locale);
+
+    /// <summary>Links a provider account; fails with LoginAlreadyAssociated when another account owns it.</summary>
+    Task<IdentityCreateResult> AddExternalLoginAsync(string userId, string provider, string providerKey, string? displayName);
+
+    Task<IReadOnlyList<string>> GetExternalLoginsAsync(string userId);
+
+    Task<IdentityCreateResult> RemoveExternalLoginAsync(string userId, string provider);
+
+    Task<bool> HasPasswordAsync(string userId);
 }
 
 public sealed record IdentityCreateResult(string? UserId, IReadOnlyList<string> ErrorCodes)

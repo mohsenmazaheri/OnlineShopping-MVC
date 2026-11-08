@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { ExternalLoginButtons } from "@/components/account/ExternalLoginButtons";
 import { AuthCard } from "@/components/account/FormParts";
 import { PhoneCodeForm } from "@/components/account/PhoneCodeForm";
 import { RegisterForm } from "@/components/account/RegisterForm";
@@ -33,6 +34,8 @@ async function Register({ locale, texts }: { locale: Locale; texts: Dictionary["
           {texts.registerWithPhone}
         </Link>
       )}
+      {/* A provider sign-in creates the account on first use. */}
+      <ExternalLoginButtons providers={store.signIn.external} locale={locale} returnTo={`/${locale}/account`} texts={texts} />
     </div>
   );
 }

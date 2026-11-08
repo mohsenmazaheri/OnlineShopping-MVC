@@ -73,7 +73,9 @@ public sealed class PhoneAccountTests(PhoneAccountTests.SmsFactory factory) : IC
 
         var store = await client.GetFromJsonAsync<StoreInfoResponse>("/api/v1/store", Json);
 
-        Assert.Equal(new SignInMethods(Password: true, PhoneCode: true), store!.SignIn);
+        Assert.True(store!.SignIn.Password);
+        Assert.True(store.SignIn.PhoneCode);
+        Assert.Empty(store.SignIn.External);
         Assert.True(store.SignUp.Phone);
     }
 
