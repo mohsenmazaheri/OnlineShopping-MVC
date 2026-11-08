@@ -44,3 +44,21 @@ export async function getExternalLogins(fetchImpl: typeof fetch = fetch): Promis
     return null;
   }
 }
+
+export type TwoFactorStatus = components["schemas"]["TwoFactorStatus"];
+
+/** Two-step sign-in status of the signed-in account (per user, never cached). */
+export async function getTwoFactorStatus(fetchImpl: typeof fetch = fetch): Promise<TwoFactorStatus | null> {
+  const session = (await cookies()).get(sessionCookieName);
+  if (!session) return null;
+  try {
+    const response = await fetchImpl(`${apiBaseUrl()}/api/v1/account/2fa`, {
+      headers: { Accept: "application/json", Cookie: `${sessionCookieName}=${session.value}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5000),
+    });
+    return response.ok ? ((await response.json()) as TwoFactorStatus) : null;
+  } catch {
+    return null;
+  }
+}

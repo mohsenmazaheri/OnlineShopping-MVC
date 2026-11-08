@@ -1,23 +1,36 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
+using OnlineShop.Application.Accounts;
 using OnlineShop.Application.Authorization;
 
 namespace OnlineShop.Infrastructure.Identity;
 
 public sealed record PermissionRequirement(string Permission) : IAuthorizationRequirement;
 
-/// <summary>Grants a permission when any of the user's role claims maps to it (fixed map in <see cref="RolePermissions"/>).</summary>
-public sealed class PermissionAuthorizationHandler : AuthorizationHandler<PermissionRequirement>
+/// <summary>
+/// Grants a permission when any of the user's role claims maps to it (fixed map in <see cref="RolePermissions"/>).
+/// With <see cref="SecurityOptions.RequireStaffTwoFactor"/> on, the session must also come from a two-step sign-in.
+/// </summary>
+public sealed class PermissionAuthorizationHandler(IOptionsMonitor<SecurityOptions> security) : AuthorizationHandler<PermissionRequirement>
 {
+    /// <summary>Identity adds amr=mfa to the session when the second step (authenticator or recovery code) was completed.</summary>
+    public const string MfaClaimType = "amr";
+    public const string MfaClaimValue = "mfa";
+
     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(requirement);
 
         var roles = context.User.FindAll(ClaimTypes.Role).Select(c => c.Value);
-        if (RolePermissions.For(roles).Contains(requirement.Permission))
-            context.Succeed(requirement);
+        if (!RolePermissions.For(roles).Contains(requirement.Permission))
+            return Task.CompletedTask;
+
+        if (security.CurrentValue.RequireStaffTwoFactor && !context.User.HasClaim(MfaClaimType, MfaClaimValue))
+            return Task.CompletedTask;
+
+        context.Succeed(requirement);
         return Task.CompletedTask;
     }
 }

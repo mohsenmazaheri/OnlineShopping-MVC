@@ -89,6 +89,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapStoreEndpoints();
 app.MapAccountEndpoints();
 app.MapExternalLoginEndpoints();
+app.MapTwoFactorEndpoints();
 
 // Build-time OpenAPI generation starts the app without a database: skip migrations and seeding there.
 if (!isOpenApiGeneration)

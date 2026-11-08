@@ -87,7 +87,9 @@ public sealed class AccountService(
             return AppError.Forbidden(AccountErrors.LockedOut, "Too many failed attempts. Try again later.");
         }
 
-        await identity.SignInAsync(userId!, request.RememberMe);
+        // An account with two-step sign-in needs the authenticator after the SMS code too.
+        if (await identity.SignInAsync(userId!, request.RememberMe) == SignInStatus.TwoFactorRequired)
+            return TwoFactorStepRequired();
         var user = await identity.FindAsync(userId!);
         return user is null
             ? AppError.NotFound(AccountErrors.NotFound, "Account not found.")
@@ -141,7 +143,7 @@ public sealed class AccountService(
         {
             SignInStatus.Succeeded => await CurrentUserOrNotFound(userId!),
             SignInStatus.LockedOut => AppError.Forbidden(AccountErrors.LockedOut, "Too many failed attempts. Try again later."),
-            SignInStatus.TwoFactorRequired => AppError.Forbidden(AccountErrors.TwoFactorRequired, "A second sign-in step is required."),
+            SignInStatus.TwoFactorRequired => TwoFactorStepRequired(),
             SignInStatus.NotAllowed => AppError.Forbidden(AccountErrors.NotAllowed, "This account cannot sign in."),
             _ => InvalidCredentials()
         };
@@ -224,6 +226,9 @@ public sealed class AccountService(
         var user = await identity.FindAsync(userId);
         return user is null ? AppError.NotFound(AccountErrors.NotFound, "Account not found.") : user;
     }
+
+    internal static AppError TwoFactorStepRequired() =>
+        AppError.Forbidden(AccountErrors.TwoFactorRequired, "A second sign-in step is required.");
 
     private static AppError InvalidCredentials() =>
         AppError.Validation(AccountErrors.InvalidCredentials, "The sign-in details are not correct.");

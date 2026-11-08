@@ -65,7 +65,9 @@ public sealed class ExternalLoginService(
         if (!isNew && await identity.IsLockedOutAsync(userId))
             return AppError.Forbidden(AccountErrors.LockedOut, "Too many failed attempts. Try again later.");
 
-        await identity.SignInAsync(userId, rememberMe: true);
+        // An account with two-step sign-in needs the authenticator after the provider too.
+        if (await identity.SignInAsync(userId, rememberMe: true) == SignInStatus.TwoFactorRequired)
+            return AccountService.TwoFactorStepRequired();
         var user = await identity.FindAsync(userId);
         return user is null ? AppError.NotFound(AccountErrors.NotFound, "Account not found.") : new ExternalSignInResult(user, isNew);
     }

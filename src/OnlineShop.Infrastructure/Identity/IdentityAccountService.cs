@@ -8,7 +8,7 @@ namespace OnlineShop.Infrastructure.Identity;
 /// <summary><see cref="IAccountIdentity"/> on ASP.NET Core Identity (password hashing, lockout, tokens, cookie).</summary>
 public sealed class IdentityAccountService(
     UserManager<AppUser> users,
-    SignInManager<AppUser> signIn,
+    AppSignInManager signIn,
     TimeProvider clock) : IAccountIdentity
 {
     public async Task<bool> EmailInUseAsync(string email, CancellationToken cancellationToken = default) =>
@@ -72,11 +72,12 @@ public sealed class IdentityAccountService(
         return (status, status == SignInStatus.Succeeded ? user.Id : null);
     }
 
-    public async Task SignInAsync(string userId, bool rememberMe)
+    public async Task<SignInStatus> SignInAsync(string userId, bool rememberMe)
     {
         var user = await users.FindByIdAsync(userId)
                    ?? throw new InvalidOperationException($"User {userId} does not exist.");
-        await signIn.SignInAsync(user, rememberMe);
+        var result = await signIn.SignInWithSecondStepAsync(user, rememberMe);
+        return result.RequiresTwoFactor ? SignInStatus.TwoFactorRequired : SignInStatus.Succeeded;
     }
 
     public Task SignOutAsync() => signIn.SignOutAsync();
@@ -90,7 +91,7 @@ public sealed class IdentityAccountService(
         var roles = (await users.GetRolesAsync(user)).Order(StringComparer.Ordinal).ToList();
         var permissions = RolePermissions.For(roles).Order(StringComparer.Ordinal).ToList();
         return new CurrentUser(user.Id, user.DisplayName, user.Email, user.EmailConfirmed, user.PhoneNumber,
-            user.PhoneNumberConfirmed, user.PreferredLocale, roles, permissions);
+            user.PhoneNumberConfirmed, user.PreferredLocale, roles, permissions, user.TwoFactorEnabled);
     }
 
     public async Task<string?> CreateEmailConfirmationTokenAsync(string userId)

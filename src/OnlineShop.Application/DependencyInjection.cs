@@ -27,6 +27,8 @@ public static class DependencyInjection
         services.AddScoped<AccountService>();
         services.AddScoped<PhoneCodeService>();
         services.AddScoped<ExternalLoginService>();
+        services.AddScoped<TwoFactorService>();
+        services.AddOptions<SecurityOptions>().Bind(configuration.GetSection(SecurityOptions.SectionName));
         services.AddOptions<PhoneCodeOptions>()
             .Bind(configuration.GetSection(PhoneCodeOptions.SectionName))
             .ValidateDataAnnotations()

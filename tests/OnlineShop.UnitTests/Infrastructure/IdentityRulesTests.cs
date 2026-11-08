@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using OnlineShop.Application.Accounts;
 using OnlineShop.Application.Authorization;
 using OnlineShop.Infrastructure.Identity;
 using OnlineShop.Infrastructure.Persistence;
@@ -101,7 +102,24 @@ public sealed class IdentityRulesTests : IDisposable
         Assert.Contains(policy!.Requirements, r => r is Microsoft.AspNetCore.Authorization.Infrastructure.DenyAnonymousAuthorizationRequirement);
         var context = new AuthorizationHandlerContext(policy.Requirements.OfType<PermissionRequirement>(), user, null);
 
-        await new PermissionAuthorizationHandler().HandleAsync(context);
+        await new PermissionAuthorizationHandler(new StaticSecurity(new SecurityOptions())).HandleAsync(context);
+
+        Assert.Equal(allowed, context.HasSucceeded);
+    }
+
+    [Theory]
+    [InlineData(false, false, true)]  // not required: any staff session works
+    [InlineData(true, false, false)]  // required: a session without the second step is refused
+    [InlineData(true, true, true)]    // required and completed
+    public async Task Staff_two_step_requirement_applies_to_permissions(bool required, bool sessionHasMfa, bool allowed)
+    {
+        var claims = new List<Claim> { new(ClaimTypes.Role, AppRoles.Manager) };
+        if (sessionHasMfa)
+            claims.Add(new Claim(PermissionAuthorizationHandler.MfaClaimType, PermissionAuthorizationHandler.MfaClaimValue));
+        var user = new ClaimsPrincipal(new ClaimsIdentity(claims, "test"));
+        var context = new AuthorizationHandlerContext([new PermissionRequirement(Permissions.CatalogManage)], user, null);
+
+        await new PermissionAuthorizationHandler(new StaticSecurity(new SecurityOptions { RequireStaffTwoFactor = required })).HandleAsync(context);
 
         Assert.Equal(allowed, context.HasSucceeded);
     }

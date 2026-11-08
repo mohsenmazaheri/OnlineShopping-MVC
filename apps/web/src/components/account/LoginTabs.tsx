@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { LoginForm } from "./LoginForm";
 import { PhoneCodeForm } from "./PhoneCodeForm";
+import { TwoFactorStep } from "./TwoFactorStep";
 
 type Method = "code" | "password";
 
@@ -14,13 +15,22 @@ type Props = {
   /** SMS codes are offered only when the shop has an SMS provider. */
   phoneCode: boolean;
   initial?: Method;
+  /** Start at the second step (a provider sign-in that needs the authenticator redirects here). */
+  twoFactor?: boolean;
 };
 
-/** Sign-in by SMS code (when available, shown first: it also creates the account) or by password. */
-export function LoginTabs({ locale, texts, returnTo, phoneCode, initial }: Props) {
+/**
+ * Sign-in by SMS code (when available, shown first: it also creates the account) or by password,
+ * followed by the authenticator step when the account has two-step sign-in on.
+ */
+export function LoginTabs({ locale, texts, returnTo, phoneCode, initial, twoFactor = false }: Props) {
   const [method, setMethod] = useState<Method>(phoneCode ? (initial ?? "code") : "password");
+  const [secondStep, setSecondStep] = useState(twoFactor);
+  const toSecondStep = () => setSecondStep(true);
 
-  if (!phoneCode) return <LoginForm locale={locale} texts={texts} returnTo={returnTo} />;
+  if (secondStep) return <TwoFactorStep texts={texts} returnTo={returnTo} />;
+
+  if (!phoneCode) return <LoginForm locale={locale} texts={texts} returnTo={returnTo} onTwoFactorRequired={toSecondStep} />;
 
   const tab = (value: Method, label: string) => (
     <button
@@ -44,9 +54,9 @@ export function LoginTabs({ locale, texts, returnTo, phoneCode, initial }: Props
       </div>
       <div role="tabpanel">
         {method === "code" ? (
-          <PhoneCodeForm locale={locale} texts={texts} mode="signIn" returnTo={returnTo} />
+          <PhoneCodeForm locale={locale} texts={texts} mode="signIn" returnTo={returnTo} onTwoFactorRequired={toSecondStep} />
         ) : (
-          <LoginForm locale={locale} texts={texts} returnTo={returnTo} />
+          <LoginForm locale={locale} texts={texts} returnTo={returnTo} onTwoFactorRequired={toSecondStep} />
         )}
       </div>
     </div>

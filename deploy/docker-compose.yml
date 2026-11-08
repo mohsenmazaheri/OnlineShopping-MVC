@@ -60,6 +60,8 @@ services:
       Auth__External__Facebook__ClientSecret: ${FACEBOOK_APP_SECRET:-}
       Auth__External__Microsoft__ClientId: ${MICROSOFT_CLIENT_ID:-}
       Auth__External__Microsoft__ClientSecret: ${MICROSOFT_CLIENT_SECRET:-}
+      # Staff permissions only work after two-step sign-in (true/false)
+      Security__RequireStaffTwoFactor: ${REQUIRE_STAFF_TWO_FACTOR:-false}
       # SMS (optional): None | Kavenegar | SmsIr | Twilio
       Sms__Provider: ${SMS_PROVIDER:-None}
       Sms__Kavenegar__ApiKey: ${KAVENEGAR_API_KEY:-}

@@ -4,6 +4,9 @@ import { useState } from "react";
 import { postJson, type ApiResult } from "@/lib/account/client";
 import { messageFor, problemMessage, type ErrorTexts, type Problem } from "@/lib/account/problems";
 
+/** Error code meaning: the first factor was fine, now the authenticator step is needed. */
+export const TWO_FACTOR_REQUIRED = "account.two_factor_required";
+
 /** Shared submit/busy/error state for the account forms. */
 export function useApiForm(errorTexts: ErrorTexts) {
   const [busy, setBusy] = useState(false);

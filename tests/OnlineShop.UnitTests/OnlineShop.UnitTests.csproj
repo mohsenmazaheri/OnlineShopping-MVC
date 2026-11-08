@@ -18,6 +18,10 @@
     <ProjectReference Include="..\..\src\OnlineShop.Api\OnlineShop.Api.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Shared RFC 6238 helper (authenticator codes) -->
+    <Compile Include="..\OnlineShop.IntegrationTests\TestSupport\Totp.cs" Link="TestSupport\Totp.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 </Project>

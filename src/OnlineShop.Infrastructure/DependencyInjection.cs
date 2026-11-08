@@ -90,7 +90,7 @@ public static class DependencyInjection
             })
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<AppDbContext>()
-            .AddSignInManager()
+            .AddSignInManager<AppSignInManager>()
             .AddUserValidator<AppUserValidator>()
             .AddDefaultTokenProviders();
 
@@ -128,6 +128,7 @@ public static class DependencyInjection
 
         services.AddSingleton<IPhoneNumberNormalizer, PhoneNumberNormalizer>();
         services.AddScoped<IAccountIdentity, IdentityAccountService>();
+        services.AddScoped<ITwoFactorIdentity, TwoFactorIdentity>();
     }
 
     private static void AddEmail(IServiceCollection services, IConfiguration configuration)

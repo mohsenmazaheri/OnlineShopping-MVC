@@ -695,10 +695,276 @@
           }
         }
       }
+    },
+    "/api/v1/account/2fa/verify": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Complete a sign-in with the authenticator app's code.",
+        "operationId": "TwoFactorSignIn",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorSignInRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUser"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/2fa/recovery": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Complete a sign-in with a one-time recovery code.",
+        "operationId": "RecoveryCodeSignIn",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoveryCodeSignInRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUser"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/2fa": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Whether two-step sign-in is on, recovery codes left, and whether it is required for this account.",
+        "operationId": "GetTwoFactorStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TwoFactorStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/2fa/setup": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "The key and otpauth:// URI (QR code) for the authenticator app.",
+        "operationId": "BeginTwoFactorSetup",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticatorSetup"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/2fa/enable": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Turn on two-step sign-in with a first code from the app; returns recovery codes (shown once).",
+        "operationId": "EnableTwoFactor",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryCodes"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/2fa/disable": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Turn off two-step sign-in (needs a current code; refused for staff when it is required).",
+        "operationId": "DisableTwoFactor",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/2fa/recovery-codes": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Replace all recovery codes (needs a current code).",
+        "operationId": "RegenerateRecoveryCodes",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryCodes"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/2fa/forget-device": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Ask for the second step again on this device.",
+        "operationId": "ForgetTwoFactorDevice",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AuthenticatorSetup": {
+        "required": [
+          "sharedKey",
+          "authenticatorUri"
+        ],
+        "type": "object",
+        "properties": {
+          "sharedKey": {
+            "type": "string"
+          },
+          "authenticatorUri": {
+            "type": "string"
+          }
+        }
+      },
       "CategorySummary": {
         "required": [
           "id",
@@ -814,6 +1080,10 @@
             "items": {
               "type": "string"
             }
+          },
+          "twoFactorEnabled": {
+            "type": "boolean",
+            "default": false
           },
           "isStaff": {
             "type": "boolean"
@@ -1036,6 +1306,31 @@
           }
         }
       },
+      "RecoveryCodes": {
+        "required": [
+          "codes"
+        ],
+        "type": "object",
+        "properties": {
+          "codes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "RecoveryCodeSignInRequest": {
+        "required": [
+          "recoveryCode"
+        ],
+        "type": "object",
+        "properties": {
+          "recoveryCode": {
+            "type": "string"
+          }
+        }
+      },
       "RegisterRequest": {
         "required": [
           "email",
@@ -1191,6 +1486,64 @@
           },
           "slug": {
             "type": "string"
+          }
+        }
+      },
+      "TwoFactorCodeRequest": {
+        "required": [
+          "code"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          }
+        }
+      },
+      "TwoFactorSignInRequest": {
+        "required": [
+          "code",
+          "rememberMe",
+          "rememberDevice"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "rememberMe": {
+            "type": "boolean"
+          },
+          "rememberDevice": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TwoFactorStatus": {
+        "required": [
+          "enabled",
+          "recoveryCodesLeft",
+          "rememberedDevice",
+          "requiredForAccount"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "recoveryCodesLeft": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "rememberedDevice": {
+            "type": "boolean"
+          },
+          "requiredForAccount": {
+            "type": "boolean"
           }
         }
       }

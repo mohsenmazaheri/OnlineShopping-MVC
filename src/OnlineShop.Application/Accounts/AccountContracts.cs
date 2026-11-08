@@ -29,7 +29,8 @@ public sealed record CurrentUser(
     bool PhoneNumberConfirmed,
     string? PreferredLocale,
     IReadOnlyList<string> Roles,
-    IReadOnlyList<string> Permissions)
+    IReadOnlyList<string> Permissions,
+    bool TwoFactorEnabled = false)
 {
     public bool IsStaff => Permissions.Count > 0;
 }
@@ -62,7 +63,8 @@ public interface IAccountIdentity
     Task<(SignInStatus Status, string? UserId)> PasswordSignInAsync(LoginIdentifier identifier, string password, bool rememberMe);
 
     /// <summary>Signs in a user who just proved who they are (e.g. right after registering).</summary>
-    Task SignInAsync(string userId, bool rememberMe);
+    /// <returns>Succeeded, or TwoFactorRequired when the account has two-step sign-in on (the second step completes it).</returns>
+    Task<SignInStatus> SignInAsync(string userId, bool rememberMe);
 
     Task SignOutAsync();
 

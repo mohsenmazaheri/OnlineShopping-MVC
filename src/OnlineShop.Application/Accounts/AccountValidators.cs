@@ -44,6 +44,10 @@ public static class AccountErrors
     public const string ExternalLoginInUse = "account.external_login_in_use";
     public const string ExternalNotLinked = "account.external_not_linked";
     public const string ExternalLastMethod = "account.external_last_method";
+    public const string TwoFactorAlreadyEnabled = "account.two_factor_already_enabled";
+    public const string TwoFactorNotEnabled = "account.two_factor_not_enabled";
+    public const string TwoFactorRequiredForStaff = "account.two_factor_required_for_staff";
+    public const string TwoFactorSessionExpired = "account.two_factor_session_expired";
 }
 
 /// <summary>Password rules shared by registration and reset (Identity enforces the same rules again).</summary>

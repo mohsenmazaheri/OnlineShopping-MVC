@@ -44,10 +44,18 @@ internal sealed class FakeAccountIdentity : IAccountIdentity
         return Task.FromResult<(SignInStatus, string?)>((SignInStatus.Succeeded, user.Id));
     }
 
-    public Task SignInAsync(string userId, bool rememberMe)
+    /// <summary>Accounts with two-step sign-in on: SignInAsync starts the second step instead of signing in.</summary>
+    public HashSet<string> TwoFactorAccounts { get; } = [];
+
+    /// <summary>Users that FindAsync reports as staff (Manager role, a back-office permission).</summary>
+    public HashSet<string> StaffUserIds { get; } = [];
+
+    public Task<SignInStatus> SignInAsync(string userId, bool rememberMe)
     {
+        if (TwoFactorAccounts.Contains(userId))
+            return Task.FromResult(SignInStatus.TwoFactorRequired);
         SignedInUserId = userId;
-        return Task.CompletedTask;
+        return Task.FromResult(SignInStatus.Succeeded);
     }
 
     public Task SignOutAsync()
@@ -61,7 +69,9 @@ internal sealed class FakeAccountIdentity : IAccountIdentity
         var user = Users.SingleOrDefault(u => u.Id == userId);
         return Task.FromResult(user is null
             ? null
-            : new CurrentUser(user.Id, null, user.Email, user.EmailConfirmed, user.Phone, user.Phone is not null, user.Locale, ["Customer"], []));
+            : StaffUserIds.Contains(user.Id)
+                ? new CurrentUser(user.Id, null, user.Email, user.EmailConfirmed, user.Phone, user.Phone is not null, user.Locale, ["Manager"], ["catalog.manage"])
+                : new CurrentUser(user.Id, null, user.Email, user.EmailConfirmed, user.Phone, user.Phone is not null, user.Locale, ["Customer"], []));
     }
 
     public Task<string?> CreateEmailConfirmationTokenAsync(string userId) =>

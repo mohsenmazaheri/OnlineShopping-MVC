@@ -192,6 +192,13 @@ After an API contract change: build the API, run `npm run gen:api`, commit `open
   placeholder and is never offered (`IExternalLoginProviders`). OAuth callback path:
   `/api/v1/account/external/{provider}/oauth-callback` (under /api/v1 so the web proxy forwards it); remote failures
   redirect to `/{locale}/account/login?error=external_failed`.
+- Two-step sign-in (2FA): optional for every account, authenticator (TOTP) + 10 recovery codes + remember-device.
+  Rules in `TwoFactorService` (Application) behind `ITwoFactorIdentity`; `AppSignInManager.SignInWithSecondStepAsync`
+  makes code/provider sign-ins honour 2FA too. A first factor that needs the second step answers 403
+  `account.two_factor_required` (provider callbacks redirect to `login?error=two_factor_required`), then
+  `/api/v1/account/2fa/verify` or `/recovery` completes it. `Security:RequireStaffTwoFactor` (default false) makes
+  permission policies require the `amr=mfa` claim and forbids staff from turning 2FA off. The QR code is generated in
+  the browser (`qrcode`), never by an external service.
 - `PublicOriginMiddleware` makes the API see `Store:PublicUrl`'s scheme and host, so absolute URLs (OAuth redirect_uri)
   and Secure cookies follow the storefront. Integration tests therefore use an `http://` public URL.
 - Browser redirects back into the storefront go through `ReturnPaths.Sanitize` (no open redirects).

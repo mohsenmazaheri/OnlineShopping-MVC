@@ -5,11 +5,17 @@ import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { FormAlert, FormField, SubmitButton } from "./FormParts";
-import { useApiForm } from "./useApiForm";
+import { TWO_FACTOR_REQUIRED, useApiForm } from "./useApiForm";
 
-type Props = { locale: string; texts: Dictionary["account"]; returnTo: string };
+type Props = {
+  locale: string;
+  texts: Dictionary["account"];
+  returnTo: string;
+  /** Called when the account needs the second sign-in step (authenticator). */
+  onTwoFactorRequired?: () => void;
+};
 
-export function LoginForm({ locale, texts, returnTo }: Props) {
+export function LoginForm({ locale, texts, returnTo, onTwoFactorRequired }: Props) {
   const router = useRouter();
   const { busy, submit, formError, fieldError } = useApiForm(texts.errors);
 
@@ -24,6 +30,8 @@ export function LoginForm({ locale, texts, returnTo }: Props) {
     if (result.ok) {
       router.replace(returnTo);
       router.refresh();
+    } else if (result.problem.code === TWO_FACTOR_REQUIRED) {
+      onTwoFactorRequired?.();
     }
   }
 

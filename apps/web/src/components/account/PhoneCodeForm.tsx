@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { cleanCode, format, toAsciiDigits } from "@/lib/account/digits";
 import { FormAlert, FormField, SubmitButton } from "./FormParts";
-import { useApiForm } from "./useApiForm";
+import { TWO_FACTOR_REQUIRED, useApiForm } from "./useApiForm";
 import { useCountdown } from "./useCountdown";
 
 type Texts = Dictionary["account"];
@@ -20,12 +20,14 @@ type Props = {
    */
   mode: "signIn" | "addPhone";
   returnTo?: string;
+  /** Called when the account needs the second sign-in step (authenticator). */
+  onTwoFactorRequired?: () => void;
 };
 
 /** WebOTP (Chrome on Android): reads the code from the incoming SMS ("@domain #code") and fills it in. */
 type OtpCredential = Credential & { code: string };
 
-export function PhoneCodeForm({ locale, texts, mode, returnTo }: Props) {
+export function PhoneCodeForm({ locale, texts, mode, returnTo, onTwoFactorRequired }: Props) {
   const router = useRouter();
   const { busy, submit, formError, fieldError } = useApiForm(texts.errors);
   const [phone, setPhone] = useState("");
@@ -55,7 +57,10 @@ export function PhoneCodeForm({ locale, texts, mode, returnTo }: Props) {
         ? { phone: toAsciiDigits(phone), code, displayName: null, locale, rememberMe: true }
         : { phone: toAsciiDigits(phone), code };
     const result = await submit<{ isNewAccount?: boolean }>(paths.verify as `/api/v1/${string}`, body);
-    if (!result.ok) return;
+    if (!result.ok) {
+      if (result.problem.code === TWO_FACTOR_REQUIRED) onTwoFactorRequired?.();
+      return;
+    }
     if (mode === "addPhone") {
       setStep("done");
       router.refresh();

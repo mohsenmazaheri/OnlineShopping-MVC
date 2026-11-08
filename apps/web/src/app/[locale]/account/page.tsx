@@ -5,10 +5,11 @@ import { AuthCard, FormAlert } from "@/components/account/FormParts";
 import { providerNames } from "@/components/account/ExternalLoginButtons";
 import { LinkedAccounts } from "@/components/account/LinkedAccounts";
 import { PhoneCodeForm } from "@/components/account/PhoneCodeForm";
+import { TwoFactorSettings } from "@/components/account/TwoFactorSettings";
 import { format } from "@/lib/account/digits";
 import { accountMetadata, firstParam, routeLocale } from "@/lib/account/page-helpers";
 import { messageFor } from "@/lib/account/problems";
-import { getCurrentUser, getExternalLogins } from "@/lib/account/session";
+import { getCurrentUser, getExternalLogins, getTwoFactorStatus } from "@/lib/account/session";
 import type { Locale } from "@/lib/i18n/config";
 import { getDictionary, type Dictionary } from "@/lib/i18n/dictionaries";
 import { loadStore } from "@/lib/store/load";
@@ -22,7 +23,13 @@ type Search = Promise<Record<string, string | string[] | undefined>>;
 
 /** Who is signed in, email confirmation, adding a phone, sign out. Profile, addresses and security follow in 2e. */
 async function AccountSummary({ locale, texts, searchParams }: { locale: Locale; texts: Dictionary["account"]; searchParams: Search }) {
-  const [user, store, query, external] = await Promise.all([getCurrentUser(), loadStore(), searchParams, getExternalLogins()]);
+  const [user, store, query, external, twoFactor] = await Promise.all([
+    getCurrentUser(),
+    loadStore(),
+    searchParams,
+    getExternalLogins(),
+    getTwoFactorStatus(),
+  ]);
   const linkedProvider = firstParam(query.linked);
   const error = firstParam(query.error);
   // proxy.ts already redirects visitors without a session cookie; this covers expired or invalid sessions.
@@ -69,6 +76,7 @@ async function AccountSummary({ locale, texts, searchParams }: { locale: Locale;
           <PhoneCodeForm locale={locale} texts={texts} mode="addPhone" />
         </section>
       )}
+      {twoFactor && <TwoFactorSettings texts={texts} status={twoFactor} />}
       {external && (
         <LinkedAccounts locale={locale} texts={texts} available={external.available} linked={external.linked} />
       )}

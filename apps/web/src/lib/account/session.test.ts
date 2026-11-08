@@ -7,7 +7,7 @@ vi.mock("next/headers", () => ({
   }),
 }));
 
-import { getCurrentUser, getExternalLogins } from "./session";
+import { getCurrentUser, getExternalLogins, getTwoFactorStatus } from "./session";
 
 describe("getCurrentUser (server rendering)", () => {
   afterEach(() => cookieStore.clear());
@@ -55,5 +55,30 @@ describe("getExternalLogins", () => {
     expect(await getExternalLogins(vi.fn())).toBeNull();
     cookieStore.set("os_session", "abc");
     expect(await getExternalLogins(vi.fn().mockResolvedValue(new Response(null, { status: 401 })))).toBeNull();
+  });
+});
+
+describe("getTwoFactorStatus", () => {
+  afterEach(() => cookieStore.clear());
+
+  it("asks the API with the session cookie, uncached", async () => {
+    cookieStore.set("os_session", "abc");
+    const status = { enabled: true, recoveryCodesLeft: 9, rememberedDevice: false, requiredForAccount: false };
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(status), { status: 200 }));
+
+    expect(await getTwoFactorStatus(fetchMock)).toEqual(status);
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringMatching(/\/api\/v1\/account\/2fa$/),
+      expect.objectContaining({ cache: "no-store", headers: expect.objectContaining({ Cookie: "os_session=abc" }) }),
+    );
+  });
+
+  it("returns null without a session, on errors or when the API is down", async () => {
+    const fetchMock = vi.fn();
+    expect(await getTwoFactorStatus(fetchMock)).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+    cookieStore.set("os_session", "abc");
+    expect(await getTwoFactorStatus(vi.fn().mockResolvedValue(new Response(null, { status: 401 })))).toBeNull();
+    expect(await getTwoFactorStatus(vi.fn().mockRejectedValue(new Error("ECONNREFUSED")))).toBeNull();
   });
 });

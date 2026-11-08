@@ -208,4 +208,17 @@ public sealed class ExternalLoginServiceTests : IDisposable
 
         Assert.Equal(ErrorKind.NotFound, (await Create().UnlinkAsync("u0", ExternalProviders.Facebook)).Error!.Kind);
     }
+
+    [Fact]
+    public async Task A_provider_alone_does_not_sign_in_an_account_with_two_step_sign_in()
+    {
+        _identity.Users.Add(new FakeAccountIdentity.User("u0", "ali@example.com", null, Password, "fa"));
+        _identity.Logins.Add(("u0", "google", "g-1"));
+        _identity.TwoFactorAccounts.Add("u0");
+
+        var result = await Create().SignInAsync(Google(), "fa");
+
+        Assert.Equal(AccountErrors.TwoFactorRequired, result.Error!.Code);
+        Assert.Null(_identity.SignedInUserId);
+    }
 }

@@ -23,10 +23,12 @@ async function Login({ locale, texts, searchParams }: { locale: Locale; texts: D
   const initial = firstParam(query.method) === "password" ? "password" : undefined;
   // Set by the API when a Google/Facebook/Microsoft round trip ends in an error.
   const error = firstParam(query.error);
+  // A provider sign-in for an account with two-step sign-in comes back here for the authenticator step.
+  const twoFactor = error === "two_factor_required";
   return (
     <div className="flex flex-col gap-5">
-      {error && <FormAlert kind="error">{messageFor(error, texts.errors)}</FormAlert>}
-      <LoginTabs locale={locale} texts={texts} returnTo={returnTo} phoneCode={store.signIn.phoneCode} initial={initial} />
+      {error && !twoFactor && <FormAlert kind="error">{messageFor(error, texts.errors)}</FormAlert>}
+      <LoginTabs locale={locale} texts={texts} returnTo={returnTo} phoneCode={store.signIn.phoneCode} initial={initial} twoFactor={twoFactor} />
       <ExternalLoginButtons providers={store.signIn.external} locale={locale} returnTo={returnTo} texts={texts} />
     </div>
   );

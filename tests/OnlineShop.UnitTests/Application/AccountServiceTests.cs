@@ -318,4 +318,18 @@ public sealed class AccountServiceTests : IDisposable
         Assert.Empty(_email.Sent);
         Assert.Equal(AccountErrors.NoEmail, (await service.ResendConfirmationAsync("u2")).Error!.Code);
     }
+
+    [Fact]
+    public async Task An_SMS_code_alone_does_not_sign_in_an_account_with_two_step_sign_in()
+    {
+        _identity.Users.Add(new FakeAccountIdentity.User("u0", null, "+989121234567", Password, "fa"));
+        _identity.TwoFactorAccounts.Add("u0");
+        var service = Create(smsEnabled: true);
+        await service.SendSignInCodeAsync(new SendPhoneCodeRequest("09121234567", null));
+
+        var result = await service.SignInWithCodeAsync(new PhoneSignInRequest("09121234567", _sms.LastCodeFor("+989121234567"), null, null, false));
+
+        Assert.Equal(AccountErrors.TwoFactorRequired, result.Error!.Code);
+        Assert.Null(_identity.SignedInUserId);
+    }
 }
