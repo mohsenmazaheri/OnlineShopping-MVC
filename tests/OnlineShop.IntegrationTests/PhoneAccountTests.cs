@@ -28,7 +28,9 @@ public sealed class PhoneAccountTests(PhoneAccountTests.SmsFactory factory) : IC
 
         protected override IReadOnlyDictionary<string, string?> ConfigurationOverrides => new Dictionary<string, string?>
         {
-            ["Sms:Provider"] = "Pickup"
+            ["Sms:Provider"] = "Pickup",
+            // Longer than the 30-minute session refresh, so a test can show the sign-in time survives it.
+            ["Auth:ReauthenticationMinutes"] = "60"
         };
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -182,6 +184,45 @@ public sealed class PhoneAccountTests(PhoneAccountTests.SmsFactory factory) : IC
         using var response = await client.PostAsJsonAsync("/api/v1/account/phone/add/send-code", new SendPhoneCodeRequest(local, null));
 
         await AssertProblemAsync(response, HttpStatusCode.Conflict, AccountErrors.PhoneTaken);
+    }
+
+    [Fact]
+    public async Task A_password_less_account_deletes_itself_soon_after_signing_in_even_across_a_session_refresh()
+    {
+        var (local, e164) = NewPhone();
+        using var client = factory.CreateClient();
+        var first = await SignInWithCodeAsync(client, local, e164);
+
+        // Past the 30-minute security stamp check: the session is rebuilt from the database and must keep auth_time.
+        factory.Clock.Advance(TimeSpan.FromMinutes(31));
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/v1/account/me")).StatusCode);
+
+        using (var deleted = await client.PostAsJsonAsync("/api/v1/account/delete", new DeleteAccountRequest(null)))
+            Assert.Equal(HttpStatusCode.OK, deleted.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/v1/account/me")).StatusCode);
+
+        // The number is free again: signing in with it creates a new, empty account.
+        factory.Clock.Advance(TimeSpan.FromSeconds(61));
+        using var fresh = factory.CreateClient();
+        var again = await SignInWithCodeAsync(fresh, local, e164);
+        Assert.True(again.IsNewAccount);
+        Assert.NotEqual(first.User.Id, again.User.Id);
+    }
+
+    [Fact]
+    public async Task Long_after_signing_in_a_password_less_account_must_sign_in_again_to_delete_itself()
+    {
+        var (local, e164) = NewPhone();
+        using var client = factory.CreateClient();
+        await SignInWithCodeAsync(client, local, e164);
+        factory.Clock.Advance(TimeSpan.FromMinutes(61));
+
+        using (var refused = await client.PostAsJsonAsync("/api/v1/account/delete", new DeleteAccountRequest(null)))
+            await AssertProblemAsync(refused, HttpStatusCode.Forbidden, ProfileErrors.ReauthenticationRequired);
+
+        await SignInWithCodeAsync(client, local, e164);
+        using var deleted = await client.PostAsJsonAsync("/api/v1/account/delete", new DeleteAccountRequest(null));
+        Assert.Equal(HttpStatusCode.OK, deleted.StatusCode);
     }
 
     private async Task<PhoneSignInResult> SignInWithCodeAsync(HttpClient client, string local, string e164)

@@ -11,7 +11,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Store name, the locales it offers and the available sign-up methods. */
+        /** Store name, the locales it offers, the available sign-up/sign-in methods and checkout settings. */
         get: operations["GetStoreInfo"];
         put?: never;
         post?: never;
@@ -497,13 +497,179 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/account/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Change the display name and the language of emails and SMS. */
+        put: operations["UpdateProfile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/change-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Change the password (needs the current one); other sessions end. */
+        post: operations["ChangePassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/personal-data": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Everything the shop stores about the signed-in customer, as a JSON file. */
+        get: operations["DownloadPersonalData"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete the account: personal data is erased, orders stay anonymously. Needs the password, or a recent sign-in for accounts without one. */
+        post: operations["DeleteAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/addresses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The address book, default address first. */
+        get: operations["ListAddresses"];
+        put?: never;
+        /** Add an address (the first one becomes the default). */
+        post: operations["CreateAddress"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/addresses/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Change an address. */
+        put: operations["UpdateAddress"];
+        post?: never;
+        /** Delete an address (for real; the next one becomes the default). */
+        delete: operations["DeleteAddress"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/addresses/{id}/default": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Make an address the default. */
+        post: operations["SetDefaultAddress"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AccountData: {
+            id: string;
+            displayName: null | string;
+            email: null | string;
+            emailConfirmed: boolean;
+            phoneNumber: null | string;
+            phoneNumberConfirmed: boolean;
+            preferredLocale: null | string;
+            /** Format: date-time */
+            createdUtc: string;
+            twoFactorEnabled: boolean;
+            externalLogins: string[];
+            roles: string[];
+        };
+        AddressInput: {
+            label: null | string;
+            recipientName: string;
+            phone: string;
+            countryCode: string;
+            region: null | string;
+            city: string;
+            line1: string;
+            line2: null | string;
+            postalCode: null | string;
+            isDefault: boolean;
+        };
+        AddressView: {
+            /** Format: uuid */
+            id: string;
+            label: null | string;
+            recipientName: string;
+            phoneNumber: string;
+            countryCode: string;
+            region: null | string;
+            city: string;
+            line1: string;
+            line2: null | string;
+            postalCode: null | string;
+            isDefault: boolean;
+        };
         AuthenticatorSetup: {
             sharedKey: string;
             authenticatorUri: string;
+        };
+        CartItemData: {
+            productName: string;
+            /** Format: int32 */
+            quantity: number | string;
         };
         CategorySummary: {
             /** Format: uuid */
@@ -511,6 +677,15 @@ export interface components {
             name: string;
             slug: string;
             subCategories: components["schemas"]["SubCategorySummary"][];
+        };
+        ChangePasswordRequest: {
+            currentPassword: string;
+            newPassword: string;
+        };
+        /** @description Checkout rules: whether customers may buy without an account, and where the shop ships (ISO country codes). */
+        CheckoutSettings: {
+            guest: boolean;
+            shippingCountries: string[];
         };
         ConfirmEmailRequest: {
             userId: string;
@@ -532,7 +707,12 @@ export interface components {
             permissions: string[];
             /** @default false */
             twoFactorEnabled: boolean;
+            /** @default false */
+            hasPassword: boolean;
             isStaff?: boolean;
+        };
+        DeleteAccountRequest: {
+            password: null | string;
         };
         ExternalLoginsView: {
             available: string[];
@@ -557,6 +737,37 @@ export interface components {
             identifier: string;
             password: string;
             rememberMe: boolean;
+        };
+        OrderData: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            orderedUtc: string;
+            status: string;
+            /** Format: double */
+            subtotal: number | string;
+            /** Format: double */
+            tax: number | string;
+            /** Format: double */
+            shipping: number | string;
+            /** Format: double */
+            total: number | string;
+            items: components["schemas"]["OrderItemData"][];
+        };
+        OrderItemData: {
+            productName: string;
+            /** Format: double */
+            unitPrice: number | string;
+            /** Format: int32 */
+            quantity: number | string;
+        };
+        PersonalDataExport: {
+            /** Format: date-time */
+            exportedUtc: string;
+            account: components["schemas"]["AccountData"];
+            addresses: components["schemas"]["AddressView"][];
+            orders: components["schemas"]["OrderData"][];
+            cart: components["schemas"]["CartItemData"][];
         };
         PhoneCodeSent: {
             /** Format: int32 */
@@ -621,6 +832,7 @@ export interface components {
             locales: string[];
             signUp: components["schemas"]["SignUpMethods"];
             signIn: components["schemas"]["SignInMethods"];
+            checkout: components["schemas"]["CheckoutSettings"];
         };
         SubCategorySummary: {
             /** Format: uuid */
@@ -642,6 +854,10 @@ export interface components {
             recoveryCodesLeft: number | string;
             rememberedDevice: boolean;
             requiredForAccount: boolean;
+        };
+        UpdateProfileRequest: {
+            displayName: null | string;
+            preferredLocale: null | string;
         };
     };
     responses: never;
@@ -1431,6 +1647,248 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    UpdateProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurrentUser"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    ChangePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    DownloadPersonalData: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PersonalDataExport"];
+                };
+            };
+        };
+    };
+    DeleteAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    ListAddresses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AddressView"][];
+                };
+            };
+        };
+    };
+    CreateAddress: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddressInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AddressView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    UpdateAddress: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddressInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AddressView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    DeleteAddress: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    SetDefaultAddress: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
             };
         };
     };

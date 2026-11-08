@@ -22,4 +22,10 @@ public sealed class AuthOptions
 
     /// <summary>Days a "remember me" sign-in stays valid (sliding).</summary>
     public int RememberMeDays { get; set; } = 14;
+
+    /// <summary>
+    /// Accounts without a password (SMS code or Google/Facebook/Microsoft sign-in) can delete themselves only this
+    /// many minutes after signing in; password accounts confirm with their password instead.
+    /// </summary>
+    public int ReauthenticationMinutes { get; set; } = 10;
 }

@@ -10,6 +10,7 @@ describe("store settings from the API", () => {
         locales: ["fa", "en"],
         signUp: { email: true, phone: true },
         signIn: { password: true, phoneCode: true, external: ["google"] },
+        checkout: { guest: true, shippingCountries: ["IR"] },
       }),
     ).toEqual({
       name: "Shop",
@@ -17,6 +18,7 @@ describe("store settings from the API", () => {
       locales: ["fa", "en"],
       signUp: { email: true, phone: true },
       signIn: { password: true, phoneCode: true, external: ["google"] },
+      checkout: { guest: true, shippingCountries: ["IR"] },
     });
   });
 
@@ -50,5 +52,17 @@ describe("external providers from the API", () => {
 
   it("offers none when the API says nothing", () => {
     expect(toStoreSettings({ name: "S", locales: ["en"] }).signIn.external).toEqual([]);
+  });
+});
+
+describe("checkout settings from the API", () => {
+  it("keeps guest checkout and valid country codes", () => {
+    const settings = toStoreSettings({ name: "S", locales: ["en"], checkout: { guest: false, shippingCountries: ["AM", "de", "DE", "AM"] } });
+
+    expect(settings.checkout).toEqual({ guest: false, shippingCountries: ["AM", "DE"] });
+  });
+
+  it("defaults to guest checkout on and no countries", () => {
+    expect(toStoreSettings({ name: "S", locales: ["en"] }).checkout).toEqual({ guest: true, shippingCountries: [] });
   });
 });

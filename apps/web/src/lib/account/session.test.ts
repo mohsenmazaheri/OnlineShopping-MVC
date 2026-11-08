@@ -7,7 +7,7 @@ vi.mock("next/headers", () => ({
   }),
 }));
 
-import { getCurrentUser, getExternalLogins, getTwoFactorStatus } from "./session";
+import { getAddresses, getCurrentUser, getExternalLogins, getTwoFactorStatus } from "./session";
 
 describe("getCurrentUser (server rendering)", () => {
   afterEach(() => cookieStore.clear());
@@ -80,5 +80,22 @@ describe("getTwoFactorStatus", () => {
     cookieStore.set("os_session", "abc");
     expect(await getTwoFactorStatus(vi.fn().mockResolvedValue(new Response(null, { status: 401 })))).toBeNull();
     expect(await getTwoFactorStatus(vi.fn().mockRejectedValue(new Error("ECONNREFUSED")))).toBeNull();
+  });
+});
+
+describe("getAddresses", () => {
+  afterEach(() => cookieStore.clear());
+
+  it("returns the address book for the session", async () => {
+    cookieStore.set("os_session", "abc");
+    const list = [{ id: "a1", city: "Tehran", isDefault: true }];
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(list), { status: 200 }));
+
+    expect(await getAddresses(fetchMock)).toEqual(list);
+    expect(fetchMock).toHaveBeenCalledWith(expect.stringMatching(/\/api\/v1\/account\/addresses$/), expect.objectContaining({ cache: "no-store" }));
+  });
+
+  it("returns null without a session", async () => {
+    expect(await getAddresses(vi.fn())).toBeNull();
   });
 });

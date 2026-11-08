@@ -85,13 +85,13 @@ public sealed class IdentityAccountService(
     public async Task<CurrentUser?> FindAsync(string userId)
     {
         var user = await users.FindByIdAsync(userId);
-        if (user is null)
+        if (user is null || user.ErasedUtc is not null)
             return null;
 
         var roles = (await users.GetRolesAsync(user)).Order(StringComparer.Ordinal).ToList();
         var permissions = RolePermissions.For(roles).Order(StringComparer.Ordinal).ToList();
         return new CurrentUser(user.Id, user.DisplayName, user.Email, user.EmailConfirmed, user.PhoneNumber,
-            user.PhoneNumberConfirmed, user.PreferredLocale, roles, permissions, user.TwoFactorEnabled);
+            user.PhoneNumberConfirmed, user.PreferredLocale, roles, permissions, user.TwoFactorEnabled, user.PasswordHash is not null);
     }
 
     public async Task<string?> CreateEmailConfirmationTokenAsync(string userId)

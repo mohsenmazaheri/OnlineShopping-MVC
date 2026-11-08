@@ -1,12 +1,8 @@
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using OnlineShop.Application.Accounts;
 using OnlineShop.Infrastructure.Identity;
-using OnlineShop.Infrastructure.Persistence;
-using OnlineShop.Infrastructure.Persistence.Interceptors;
 using OnlineShop.IntegrationTests.TestSupport;
 using OnlineShop.UnitTests.TestSupport;
 
@@ -15,47 +11,14 @@ namespace OnlineShop.UnitTests.Infrastructure;
 /// <summary>Identity side of two-step sign-in on a real (SQLite) user store; the cookie round trips are in the integration tests.</summary>
 public sealed class TwoFactorIdentityTests : IDisposable
 {
-    private readonly SqliteTestDatabase _database = new();
-    private readonly ServiceProvider _services;
-    private readonly AsyncServiceScope _scope;
-    private readonly DefaultHttpContext _http = new();
+    private readonly IdentityTestHost _host = new(s => s.AddScoped<TwoFactorIdentity>());
 
-    public TwoFactorIdentityTests()
-    {
-        var services = new ServiceCollection();
-        services.AddLogging();
-        services.AddDbContext<AppDbContext>(o => o.UseSqlite(_database.Connection).UseSnakeCaseNamingConvention()
-            .AddInterceptors(new AuditableEntityInterceptor(_database.Clock)));
-        services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();
-        services.AddIdentityCore<AppUser>(o => o.User.RequireUniqueEmail = false)
-            .AddRoles<IdentityRole>()
-            .AddEntityFrameworkStores<AppDbContext>()
-            .AddSignInManager<AppSignInManager>()
-            .AddDefaultTokenProviders();
-        services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor { HttpContext = _http });
-        services.AddScoped<TwoFactorIdentity>();
-        _services = services.BuildServiceProvider();
-        _scope = _services.CreateAsyncScope();
-        _http.RequestServices = _scope.ServiceProvider;
-    }
+    public void Dispose() => _host.Dispose();
 
-    public void Dispose()
-    {
-        _scope.Dispose();
-        _services.Dispose();
-        _database.Dispose();
-    }
+    private TwoFactorIdentity Sut => _host.Get<TwoFactorIdentity>();
+    private UserManager<AppUser> Users => _host.Users;
 
-    private TwoFactorIdentity Sut => _scope.ServiceProvider.GetRequiredService<TwoFactorIdentity>();
-    private UserManager<AppUser> Users => _scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
-
-    private async Task<AppUser> CreateUserAsync()
-    {
-        var name = Guid.NewGuid().ToString("N");
-        var user = new AppUser { UserName = name, Email = $"{name}@example.com" };
-        Assert.True((await Users.CreateAsync(user)).Succeeded);
-        return user;
-    }
+    private Task<AppUser> CreateUserAsync() => _host.CreateUserAsync();
 
     private async Task<string> CurrentCodeAsync(AppUser user) =>
         Totp.Code(await Users.GetAuthenticatorKeyAsync(user) ?? throw new InvalidOperationException("no key"));
@@ -140,7 +103,7 @@ public sealed class TwoFactorIdentityTests : IDisposable
     [Fact]
     public async Task Sign_in_without_password_asks_for_the_second_step_only_when_it_is_on()
     {
-        var signIn = _scope.ServiceProvider.GetRequiredService<AppSignInManager>();
+        var signIn = _host.SignIn;
         var plain = await CreateUserAsync();
         var protectedUser = await CreateUserAsync();
         // As after enrolment: Identity asks for the step only when a provider (here the authenticator key) is usable.
@@ -152,6 +115,6 @@ public sealed class TwoFactorIdentityTests : IDisposable
 
         Assert.True(result.RequiresTwoFactor);
         // Only the short-lived "pending second step" cookie was issued, not a session for the protected user.
-        Assert.Contains(_http.Response.Headers.SetCookie, c => c!.StartsWith(IdentityConstants.TwoFactorUserIdScheme, StringComparison.Ordinal));
+        Assert.Contains(_host.Http.Response.Headers.SetCookie, c => c!.StartsWith(IdentityConstants.TwoFactorUserIdScheme, StringComparison.Ordinal));
     }
 }

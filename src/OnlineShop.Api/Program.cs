@@ -90,6 +90,8 @@ app.MapStoreEndpoints();
 app.MapAccountEndpoints();
 app.MapExternalLoginEndpoints();
 app.MapTwoFactorEndpoints();
+app.MapProfileEndpoints();
+app.MapAddressEndpoints();
 
 // Build-time OpenAPI generation starts the app without a database: skip migrations and seeding there.
 if (!isOpenApiGeneration)

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { postJson } from "./client";
+import { postJson, sendJson } from "./client";
 
 describe("postJson (browser API calls)", () => {
   it("posts JSON to the same origin with credentials and returns the data", async () => {
@@ -37,5 +37,17 @@ describe("postJson (browser API calls)", () => {
     const result = await postJson("/api/v1/account/login", {}, vi.fn().mockResolvedValue(new Response("<html>502</html>", { status: 502 })));
 
     expect(result).toEqual({ ok: false, problem: { status: 502, fieldErrors: {} } });
+  });
+});
+
+describe("sendJson", () => {
+  it("uses the given method for updates and deletes", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 200 }));
+
+    await sendJson("PUT", "/api/v1/account/profile", { displayName: "Ali" }, fetchMock);
+    await sendJson("DELETE", "/api/v1/account/addresses/1", undefined, fetchMock);
+
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: "PUT", body: '{"displayName":"Ali"}' });
+    expect(fetchMock.mock.calls[1][1]).toMatchObject({ method: "DELETE", body: undefined });
   });
 });

@@ -18,6 +18,10 @@ public sealed class AppUserValidator : IUserValidator<AppUser>
         ArgumentNullException.ThrowIfNull(manager);
         ArgumentNullException.ThrowIfNull(user);
 
+        // An erased account keeps its row without any contact details on purpose.
+        if (user.ErasedUtc is not null)
+            return IdentityResult.Success;
+
         var errors = new List<IdentityError>();
         var email = string.IsNullOrWhiteSpace(user.Email) ? null : user.Email;
         var phone = string.IsNullOrWhiteSpace(user.PhoneNumber) ? null : user.PhoneNumber;

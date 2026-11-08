@@ -42,6 +42,9 @@ services:
       # Links in emails and the only origin allowed to send state-changing requests (CSRF check).
       Store__PublicUrl: ${SITE_URL:?Set SITE_URL in deploy/.env}
       Store__PhoneRegion: ${PHONE_REGION:-IR}
+      # Countries addresses may be in (ISO codes, comma-separated); empty = PHONE_REGION only.
+      Store__ShippingCountries: ${SHIPPING_COUNTRIES:-}
+      Store__GuestCheckout: ${GUEST_CHECKOUT:-true}
       Auth__EmailSignUp: ${AUTH_EMAIL_SIGN_UP:-true}
       Auth__PhoneSignUp: ${AUTH_PHONE_SIGN_UP:-true}
       # Only for a plain-HTTP test instance set this to false (cookies would otherwise not be sent).

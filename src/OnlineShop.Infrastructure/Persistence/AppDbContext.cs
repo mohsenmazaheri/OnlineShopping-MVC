@@ -7,6 +7,7 @@ using OnlineShop.Application.Common;
 using OnlineShop.Domain.Accounts;
 using OnlineShop.Domain.Catalog;
 using OnlineShop.Domain.Common;
+using OnlineShop.Domain.Customers;
 using OnlineShop.Domain.Sales;
 using OnlineShop.Infrastructure.Identity;
 
@@ -33,6 +34,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<PhoneVerificationCode> PhoneVerificationCodes => Set<PhoneVerificationCode>();
+    public DbSet<CustomerAddress> CustomerAddresses => Set<CustomerAddress>();
 
     /// <summary>ASP.NET Core Data Protection keys, shared by all app instances (cookies, antiforgery tokens).</summary>
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
@@ -52,6 +54,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         ConfigureCart(builder);
         ConfigureOrders(builder);
         ConfigurePhoneCodes(builder);
+        ConfigureAddresses(builder);
         ApplySoftDeleteQueryFilters(builder);
     }
 
@@ -173,6 +176,29 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(c => c.Salt).HasMaxLength(32);
             // Every lookup is "latest codes for this number".
             e.HasIndex(c => new { c.PhoneNumber, c.Purpose, c.CreatedUtc });
+        });
+    }
+
+    private static void ConfigureAddresses(ModelBuilder b)
+    {
+        b.Entity<CustomerAddress>(e =>
+        {
+            e.ToTable("customer_addresses");
+            e.Property(a => a.CustomerId).HasMaxLength(450);
+            e.Property(a => a.Label).HasMaxLength(50);
+            e.Property(a => a.RecipientName).HasMaxLength(100);
+            e.Property(a => a.PhoneNumber).HasMaxLength(20);
+            e.Property(a => a.CountryCode).HasMaxLength(2).IsFixedLength();
+            e.Property(a => a.Region).HasMaxLength(100);
+            e.Property(a => a.City).HasMaxLength(100);
+            e.Property(a => a.Line1).HasMaxLength(300);
+            e.Property(a => a.Line2).HasMaxLength(300);
+            e.Property(a => a.PostalCode).HasMaxLength(20);
+            e.HasIndex(a => a.CustomerId);
+            e.HasOne<AppUser>()
+                .WithMany()
+                .HasForeignKey(a => a.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 

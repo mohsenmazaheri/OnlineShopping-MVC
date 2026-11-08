@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { postJson, type ApiResult } from "@/lib/account/client";
+import { sendJson, type ApiResult, type Method } from "@/lib/account/client";
 import { messageFor, problemMessage, type ErrorTexts, type Problem } from "@/lib/account/problems";
 
 /** Error code meaning: the first factor was fine, now the authenticator step is needed. */
@@ -12,11 +12,11 @@ export function useApiForm(errorTexts: ErrorTexts) {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<Problem | null>(null);
 
-  async function submit<T>(path: `/api/v1/${string}`, body: unknown): Promise<ApiResult<T>> {
+  async function submit<T>(path: `/api/v1/${string}`, body: unknown, method: Method = "POST"): Promise<ApiResult<T>> {
     setBusy(true);
     setProblem(null);
     try {
-      const result = await postJson<T>(path, body);
+      const result = await sendJson<T>(method, path, body);
       if (!result.ok) setProblem(result.problem);
       return result;
     } finally {

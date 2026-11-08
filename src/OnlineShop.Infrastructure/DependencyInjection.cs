@@ -97,6 +97,10 @@ public static class DependencyInjection
         // Reset/confirmation links stay valid for a short time only.
         services.Configure<DataProtectionTokenProviderOptions>(o => o.TokenLifespan = TimeSpan.FromHours(2));
 
+        // The periodic security-stamp check rebuilds the session from the database; keep how the user signed in
+        // (auth_time, amr=mfa) instead of silently dropping it.
+        services.Configure<SecurityStampValidatorOptions>(o => o.OnRefreshingPrincipal = SignInClaims.PreserveOnRefresh);
+
         // Read through IOptions when the cookie handler is first used, not while registering services:
         // configuration sources added later (environment, tests) must be honoured.
         services.AddOptions<CookieAuthenticationOptions>(IdentityConstants.ApplicationScheme)
@@ -129,6 +133,7 @@ public static class DependencyInjection
         services.AddSingleton<IPhoneNumberNormalizer, PhoneNumberNormalizer>();
         services.AddScoped<IAccountIdentity, IdentityAccountService>();
         services.AddScoped<ITwoFactorIdentity, TwoFactorIdentity>();
+        services.AddScoped<IAccountDataIdentity, IdentityAccountDataService>();
     }
 
     private static void AddEmail(IServiceCollection services, IConfiguration configuration)

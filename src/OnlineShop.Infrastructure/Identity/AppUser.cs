@@ -14,4 +14,7 @@ public class AppUser : IdentityUser
     public string? PreferredLocale { get; set; }
 
     public DateTime CreatedUtc { get; set; }
+
+    /// <summary>Set when the customer deleted the account: the row stays (orders reference it) but holds no personal data.</summary>
+    public DateTime? ErasedUtc { get; set; }
 }

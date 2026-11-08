@@ -1,16 +1,20 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { supportedLocales } from "./config";
 import { getDictionary } from "./dictionaries";
 
-/** Error codes the API can return, read from the C# source so a new code without a translation fails here. */
+/**
+ * Error codes the API can return, read from every C# file of the Application project (not bin/obj), so a new code
+ * without a translation fails here.
+ */
 function apiAccountErrorCodes(): string[] {
-  const source = readFileSync(
-    fileURLToPath(new URL("../../../../../src/OnlineShop.Application/Accounts/AccountValidators.cs", import.meta.url)),
-    "utf8",
+  const root = fileURLToPath(new URL("../../../../../src/OnlineShop.Application/", import.meta.url));
+  const files = readdirSync(root, { recursive: true, encoding: "utf8" }).filter(
+    (file) => file.endsWith(".cs") && !/(^|[\\/])(bin|obj)[\\/]/.test(file),
   );
-  return [...source.matchAll(/= "account\.([a-z_]+)"/g)].map((m) => m[1]);
+  const codes = files.flatMap((file) => [...readFileSync(root + file, "utf8").matchAll(/= "account\.([a-z0-9_]+)"/g)].map((m) => m[1]));
+  return [...new Set(codes)];
 }
 
 describe("API error code translations", () => {

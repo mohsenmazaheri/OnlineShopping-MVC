@@ -30,7 +30,8 @@ public sealed record CurrentUser(
     string? PreferredLocale,
     IReadOnlyList<string> Roles,
     IReadOnlyList<string> Permissions,
-    bool TwoFactorEnabled = false)
+    bool TwoFactorEnabled = false,
+    bool HasPassword = false)
 {
     public bool IsStaff => Permissions.Count > 0;
 }

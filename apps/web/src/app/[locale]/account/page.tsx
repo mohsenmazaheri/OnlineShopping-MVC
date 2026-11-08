@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { LogoutButton, ResendConfirmationButton } from "@/components/account/AccountActions";
+import { AccountNav } from "@/components/account/AccountNav";
 import { AuthCard, FormAlert } from "@/components/account/FormParts";
 import { providerNames } from "@/components/account/ExternalLoginButtons";
 import { LinkedAccounts } from "@/components/account/LinkedAccounts";
 import { PhoneCodeForm } from "@/components/account/PhoneCodeForm";
+import { ChangePasswordForm, ProfileForm } from "@/components/account/ProfileForms";
 import { TwoFactorSettings } from "@/components/account/TwoFactorSettings";
 import { format } from "@/lib/account/digits";
 import { accountMetadata, firstParam, routeLocale } from "@/lib/account/page-helpers";
@@ -21,7 +23,7 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/account"
 
 type Search = Promise<Record<string, string | string[] | undefined>>;
 
-/** Who is signed in, email confirmation, adding a phone, sign out. Profile, addresses and security follow in 2e. */
+/** Profile, email confirmation, adding a phone, password, two-step sign-in, linked providers, sign out. */
 async function AccountSummary({ locale, texts, searchParams }: { locale: Locale; texts: Dictionary["account"]; searchParams: Search }) {
   const [user, store, query, external, twoFactor] = await Promise.all([
     getCurrentUser(),
@@ -43,12 +45,6 @@ async function AccountSummary({ locale, texts, searchParams }: { locale: Locale;
       )}
       {error && <FormAlert kind="error">{messageFor(error, texts.errors)}</FormAlert>}
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-        {user.displayName && (
-          <>
-            <dt className="text-muted">{texts.displayName}</dt>
-            <dd>{user.displayName}</dd>
-          </>
-        )}
         {user.email && (
           <>
             <dt className="text-muted">{texts.email}</dt>
@@ -68,12 +64,26 @@ async function AccountSummary({ locale, texts, searchParams }: { locale: Locale;
           <ResendConfirmationButton texts={texts} />
         </div>
       )}
+      <section aria-labelledby="profile" className="rounded-xl border border-border p-3">
+        <h2 id="profile" className="mb-3 font-semibold">
+          {texts.profileTitle}
+        </h2>
+        <ProfileForm texts={texts} displayName={user.displayName ?? null} preferredLocale={user.preferredLocale ?? null} locales={store.locales} />
+      </section>
       {!user.phoneNumber && store.signIn.phoneCode && (
         <section aria-labelledby="add-phone" className="rounded-xl border border-border p-3">
           <h2 id="add-phone" className="mb-3 font-semibold">
             {texts.addPhoneTitle}
           </h2>
           <PhoneCodeForm locale={locale} texts={texts} mode="addPhone" />
+        </section>
+      )}
+      {user.hasPassword && (
+        <section aria-labelledby="change-password" className="rounded-xl border border-border p-3">
+          <h2 id="change-password" className="mb-3 font-semibold">
+            {texts.changePasswordTitle}
+          </h2>
+          <ChangePasswordForm texts={texts} />
         </section>
       )}
       {twoFactor && <TwoFactorSettings texts={texts} status={twoFactor} />}
@@ -90,6 +100,7 @@ export default async function AccountPage({ params, searchParams }: PageProps<"/
   const dict = await getDictionary(locale);
   return (
     <AuthCard title={dict.account.accountTitle}>
+      <AccountNav locale={locale} texts={dict.account} current="profile" />
       <Suspense fallback={<p role="status">{dict.account.working}</p>}>
         <AccountSummary locale={locale} texts={dict.account} searchParams={searchParams} />
       </Suspense>

@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes, ReactNode } from "react";
+import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
 
 type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
   label: string;
@@ -31,6 +31,44 @@ export function FormField({ label, name, error, hint, id, className, ...input }:
       )}
       {error && (
         <p id={`${inputId}-error`} className="text-sm text-red-600 dark:text-red-400">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
+  label: string;
+  name: string;
+  options: readonly { value: string; label: string }[];
+  error?: string;
+};
+
+/** Labelled select with the same look, touch target and error wiring as {@link FormField}. */
+export function SelectField({ label, name, options, error, id, className, ...select }: SelectProps) {
+  const selectId = id ?? `field-${name}`;
+  return (
+    <div className="flex flex-col gap-1">
+      <label htmlFor={selectId} className="text-sm font-medium">
+        {label}
+      </label>
+      <select
+        id={selectId}
+        name={name}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${selectId}-error` : undefined}
+        className={`h-12 rounded-xl border border-border bg-surface px-3 text-base outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 aria-[invalid=true]:border-red-500 ${className ?? ""}`}
+        {...select}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      {error && (
+        <p id={`${selectId}-error`} className="text-sm text-red-600 dark:text-red-400">
           {error}
         </p>
       )}

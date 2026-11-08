@@ -15,6 +15,8 @@ export type StoreSettings = {
   signUp: { email: boolean; phone: boolean };
   /** Sign-in methods offered (SMS codes only when an SMS provider is configured). */
   signIn: { password: boolean; phoneCode: boolean; external: string[] };
+  /** Guest checkout, and the countries addresses may be in (ISO codes, upper case). */
+  checkout: { guest: boolean; shippingCountries: string[] };
 };
 
 export type StoreInfoLike = {
@@ -23,6 +25,7 @@ export type StoreInfoLike = {
   locales?: readonly string[] | null;
   signUp?: { email?: boolean | null; phone?: boolean | null } | null;
   signIn?: { password?: boolean | null; phoneCode?: boolean | null; external?: readonly string[] | null } | null;
+  checkout?: { guest?: boolean | null; shippingCountries?: readonly string[] | null } | null;
 };
 
 /** Used when the API cannot be reached, so pages and redirects still work. */
@@ -32,6 +35,7 @@ export const fallbackStore: StoreSettings = {
   locales: [...supportedLocales],
   signUp: { email: true, phone: false },
   signIn: { password: true, phoneCode: false, external: [] },
+  checkout: { guest: true, shippingCountries: [] },
 };
 
 /** Validates API data: drops locales this web build cannot render and keeps the default among the locales. */
@@ -46,9 +50,14 @@ export function toStoreSettings(info: StoreInfoLike | null | undefined): StoreSe
     external: (info.signIn?.external ?? []).filter((p) => (externalProviders as readonly string[]).includes(p)),
   };
 
+  const checkout = {
+    guest: info.checkout?.guest ?? true,
+    shippingCountries: [...new Set((info.checkout?.shippingCountries ?? []).filter((c) => /^[A-Z]{2}$/.test(c)))],
+  };
+
   const locales = [...new Set((info.locales ?? []).filter(isLocale))];
-  if (locales.length === 0) return { ...fallbackStore, name, signUp, signIn };
+  if (locales.length === 0) return { ...fallbackStore, name, signUp, signIn, checkout };
 
   const defaultLocale = isLocale(info.defaultLocale) && locales.includes(info.defaultLocale) ? info.defaultLocale : locales[0];
-  return { name, defaultLocale, locales, signUp, signIn };
+  return { name, defaultLocale, locales, signUp, signIn, checkout };
 }

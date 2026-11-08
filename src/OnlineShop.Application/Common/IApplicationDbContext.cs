@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using OnlineShop.Domain.Accounts;
 using OnlineShop.Domain.Catalog;
+using OnlineShop.Domain.Customers;
 using OnlineShop.Domain.Sales;
 
 namespace OnlineShop.Application.Common;
@@ -21,6 +22,7 @@ public interface IApplicationDbContext
     DbSet<Order> Orders { get; }
     DbSet<OrderItem> OrderItems { get; }
     DbSet<PhoneVerificationCode> PhoneVerificationCodes { get; }
+    DbSet<CustomerAddress> CustomerAddresses { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

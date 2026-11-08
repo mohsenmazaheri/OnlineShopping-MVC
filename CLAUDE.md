@@ -168,8 +168,9 @@ After an API contract change: build the API, run `npm run gen:api`, commit `open
   `RolePermissions` (fixed in code; Admin = all). Get the user id only via `User.GetUserId()`.
 - Account use cases live in `Application/Accounts/AccountService` behind `IAccountIdentity` (Identity in
   Infrastructure). Request validation: FluentValidation validators + `.Validate<T>()` endpoint filter → 400 with
-  `errors: { field: [codes] }`. Error codes are constants in `AccountErrors`; the web app translates them
-  (`dictionaries/*.json` → `account.errors`), and a test fails if any code lacks a translation in any locale.
+  `errors: { field: [codes] }`. Error codes are `account.*` constants (`AccountErrors`, `ProfileErrors`,
+  `AddressErrors`); the web app translates them (`dictionaries/*.json` → `account.errors`), and a test that scans the
+  whole Application project fails if any code lacks a translation in any locale.
 - No account enumeration: wrong identifier and wrong password give the same answer; forgot-password always 202.
 - Sign-in/sign-up/recovery endpoints use the `auth` rate-limit policy (`RateLimiting:AuthPermitPerWindow`).
 - Options that depend on configuration must be read through `IOptions` at runtime, never with
@@ -199,6 +200,17 @@ After an API contract change: build the API, run `npm run gen:api`, commit `open
   `/api/v1/account/2fa/verify` or `/recovery` completes it. `Security:RequireStaffTwoFactor` (default false) makes
   permission policies require the `amr=mfa` claim and forbids staff from turning 2FA off. The QR code is generated in
   the browser (`qrcode`), never by an external service.
+- Every session carries `auth_time` (set in `AppSignInManager.SignInWithClaimsAsync`). Identity's periodic security
+  stamp check rebuilds the principal from the database; `SignInClaims.PreserveOnRefresh` keeps `auth_time`, `amr` and
+  the provider claim (without it, 2FA sessions silently lose `amr=mfa`). Use `SignInClaims.AuthTime(user)` for "signed
+  in recently" checks.
+- Profile/data rights: `ProfileService` and `PersonalDataService` (Application) behind `IAccountDataIdentity`, kept
+  apart from `IAccountIdentity`. Deleting an account **erases** it: personal rows are hard-deleted
+  (`ExecuteDeleteAsync`, not the soft delete), the `users` row stays with no personal data (`ErasedUtc`, skipped by
+  `AppUserValidator`) because orders reference it. Any new table with personal data must be cleared in
+  `PersonalDataService.DeleteAsync` and included in `ExportAsync`.
+- Addresses: `AddressService` (Application/Customers); every query filters `CustomerId == userId`. Countries come
+  from `Store:ShippingCountries` (empty = `PhoneRegion`), postal codes are checked by `PostalCodes`.
 - `PublicOriginMiddleware` makes the API see `Store:PublicUrl`'s scheme and host, so absolute URLs (OAuth redirect_uri)
   and Secure cookies follow the storefront. Integration tests therefore use an `http://` public URL.
 - Browser redirects back into the storefront go through `ReturnPaths.Sanitize` (no open redirects).

@@ -91,8 +91,10 @@ describe("PhoneCodeForm (sign in)", () => {
     expect(screen.queryByRole("button", { name: texts.resend })).toBeNull();
     expect(screen.getByText(texts.resendIn.replace("{seconds}", "60"))).toBeTruthy();
 
+    // Async: lets React run the effect that starts the countdown interval before the fake time moves on
+    // (the synchronous version raced with React's effect scheduling and failed on a busy machine).
     await act(async () => {
-      vi.advanceTimersByTime(61_000);
+      await vi.advanceTimersByTimeAsync(61_000);
     });
     expect(screen.getByRole("button", { name: texts.resend })).toBeTruthy();
   });
