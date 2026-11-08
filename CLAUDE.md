@@ -155,6 +155,31 @@ After an API contract change: build the API, run `npm run gen:api`, commit `open
 - Logging via `[LoggerMessage]` source-generated methods (analyzer CA1848).
 - Code style: file-scoped namespaces, primary constructors, `sealed` by default, `required`/`= default!`.
 
+## Accounts and authorization
+
+- Accounts are identified by **email or phone** (at least one; each unique — `AppUserValidator` + filtered unique
+  indexes `ux_users_normalized_email`, `ux_users_phone_number`). `UserName` is an internal random value. Phones are
+  stored in E.164 via `IPhoneNumberNormalizer` (libphonenumber; accepts Persian/Arabic digits; `Store:PhoneRegion`).
+- Session = Identity application cookie `os_session` (HttpOnly, SameSite=Lax, Secure unless `Auth:SecureCookies=false`),
+  issued by the API and passed through the web proxy. The API answers 401/403, never redirects.
+- CSRF: `OriginCheckMiddleware` rejects POST/PUT/PATCH/DELETE whose `Origin` is not `Store:PublicUrl`'s origin.
+- Authorization: endpoints require **permissions**, not roles —
+  `.RequireAuthorization(Permissions.Policy(Permissions.CatalogManage))`. Roles map to permissions in
+  `RolePermissions` (fixed in code; Admin = all). Get the user id only via `User.GetUserId()`.
+- Account use cases live in `Application/Accounts/AccountService` behind `IAccountIdentity` (Identity in
+  Infrastructure). Request validation: FluentValidation validators + `.Validate<T>()` endpoint filter → 400 with
+  `errors: { field: [codes] }`. Error codes are constants in `AccountErrors`; the web app translates them
+  (`dictionaries/*.json` → `account.errors`), and a test fails if any code lacks a translation in any locale.
+- No account enumeration: wrong identifier and wrong password give the same answer; forgot-password always 202.
+- Sign-in/sign-up/recovery endpoints use the `auth` rate-limit policy (`RateLimiting:AuthPermitPerWindow`).
+- Options that depend on configuration must be read through `IOptions` at runtime, never with
+  `configuration.Get<T>()` while registering services — later sources (env vars, tests) would be ignored.
+- Email: `IEmailSender` (`Email:Delivery` = `Smtp` in production, `Pickup` = `.eml` files under `App_Data/mail` in
+  development). Texts in `EmailTemplates` for every locale; links always point at `Store:PublicUrl/{locale}/…`.
+- Web: forms post JSON to `/api/v1/account/*` from the browser (`postJson`); server components read the user with
+  `getCurrentUser()` (forwards only the session cookie, never cached). `proxy.ts` redirects signed-out visitors away
+  from private `/{locale}/account/*` pages; `safeReturnPath()` prevents open redirects.
+
 ## Frontend conventions (Next.js 16 — read node_modules/next/dist/docs before using unfamiliar APIs)
 
 - Cache Components + Partial Prefetching are on. Data fetchers use `"use cache"` + `cacheTag` + `cacheLife`;

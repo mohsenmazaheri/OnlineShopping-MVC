@@ -62,7 +62,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     /// </summary>
     private static void ConfigureIdentityTables(ModelBuilder b)
     {
-        b.Entity<AppUser>().ToTable("users");
+        b.Entity<AppUser>(e =>
+        {
+            e.ToTable("users");
+            e.Property(u => u.DisplayName).HasMaxLength(100);
+            e.Property(u => u.PreferredLocale).HasMaxLength(8);
+            e.Property(u => u.PhoneNumber).HasMaxLength(20);
+            // Accounts sign in with email OR phone: each must be unique when present.
+            e.HasIndex(u => u.NormalizedEmail).HasDatabaseName("ux_users_normalized_email")
+                .IsUnique().HasFilter("normalized_email IS NOT NULL");
+            e.HasIndex(u => u.PhoneNumber).HasDatabaseName("ux_users_phone_number")
+                .IsUnique().HasFilter("phone_number IS NOT NULL");
+        });
         b.Entity<IdentityRole>().ToTable("roles");
         b.Entity<IdentityUserRole<string>>().ToTable("user_roles");
         b.Entity<IdentityUserClaim<string>>().ToTable("user_claims");

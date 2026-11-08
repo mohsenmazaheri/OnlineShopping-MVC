@@ -126,7 +126,8 @@ public sealed class DataSeederTests : IDisposable
             sp.GetRequiredService<RoleManager<IdentityRole>>(),
             sp.GetRequiredService<UserManager<AppUser>>(),
             Options.Create(options),
-            NullLogger<DataSeeder>.Instance);
+            NullLogger<DataSeeder>.Instance,
+            _database.Clock);
 
         await seeder.SeedAsync();
     }

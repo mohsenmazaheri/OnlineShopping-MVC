@@ -10,6 +10,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
+    <PackageReference Include="MailKit" />
+    <PackageReference Include="libphonenumber-csharp" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="OnlineShop.UnitTests" />

@@ -8,24 +8,35 @@ export type StoreSettings = {
   name: string;
   defaultLocale: Locale;
   locales: Locale[];
+  /** Sign-up methods offered (phone only when an SMS provider is configured). */
+  signUp: { email: boolean; phone: boolean };
 };
 
-export type StoreInfoLike = { name?: string | null; defaultLocale?: string | null; locales?: readonly string[] | null };
+export type StoreInfoLike = {
+  name?: string | null;
+  defaultLocale?: string | null;
+  locales?: readonly string[] | null;
+  signUp?: { email?: boolean | null; phone?: boolean | null } | null;
+};
 
 /** Used when the API cannot be reached, so pages and redirects still work. */
 export const fallbackStore: StoreSettings = {
   name: "Online Shop",
   defaultLocale: "fa",
   locales: [...supportedLocales],
+  signUp: { email: true, phone: false },
 };
 
 /** Validates API data: drops locales this web build cannot render and keeps the default among the locales. */
 export function toStoreSettings(info: StoreInfoLike | null | undefined): StoreSettings {
   if (!info) return fallbackStore;
 
+  const name = info.name?.trim() || fallbackStore.name;
+  const signUp = { email: info.signUp?.email ?? true, phone: info.signUp?.phone ?? false };
+
   const locales = [...new Set((info.locales ?? []).filter(isLocale))];
-  if (locales.length === 0) return { ...fallbackStore, name: info.name?.trim() || fallbackStore.name };
+  if (locales.length === 0) return { ...fallbackStore, name, signUp };
 
   const defaultLocale = isLocale(info.defaultLocale) && locales.includes(info.defaultLocale) ? info.defaultLocale : locales[0];
-  return { name: info.name?.trim() || fallbackStore.name, defaultLocale, locales };
+  return { name, defaultLocale, locales, signUp };
 }

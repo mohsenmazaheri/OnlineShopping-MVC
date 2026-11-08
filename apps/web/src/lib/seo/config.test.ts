@@ -23,7 +23,9 @@ describe("SEO config", () => {
     const robots = buildRobots(prod);
     expect(robots.sitemap).toBe("https://shop.example.com/sitemap.xml");
     const rules = robots.rules as { disallow: string[] };
-    expect(rules.disallow).toEqual(expect.arrayContaining(["/api/", "/cart", "/checkout", "/account", "/admin"]));
+    expect(rules.disallow).toEqual(expect.arrayContaining(["/api/", "/*/cart", "/*/checkout", "/*/account", "/*/admin"]));
+    // Regression: rules without the locale wildcard never matched real URLs like /fa/account.
+    expect(rules.disallow).not.toContain("/account");
   });
 
   it("builds canonical and hreflang alternates with x-default", () => {

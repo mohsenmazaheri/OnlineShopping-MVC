@@ -1,11 +1,85 @@
 {
-  "meta": { "description": "Einfach, schnell und sicher online einkaufen" },
+  "meta": {
+    "description": "Einfach, schnell und sicher online einkaufen"
+  },
   "home": {
     "categories": "Kategorien",
     "noCategories": "Noch keine Kategorien.",
     "loading": "Wird geladen…",
     "unavailable": "Der Shop ist vorübergehend nicht erreichbar. Bitte versuchen Sie es gleich noch einmal."
   },
-  "offline": { "title": "Sie sind offline", "body": "Laden Sie die Seite neu, sobald Sie wieder online sind." },
-  "notFound": { "title": "Seite nicht gefunden", "home": "Zur Startseite" }
+  "offline": {
+    "title": "Sie sind offline",
+    "body": "Laden Sie die Seite neu, sobald Sie wieder online sind."
+  },
+  "notFound": {
+    "title": "Seite nicht gefunden",
+    "home": "Zur Startseite"
+  },
+  "header": {
+    "signIn": "Anmelden | Registrieren",
+    "myAccount": "Mein Konto"
+  },
+  "account": {
+    "loginTitle": "Anmelden",
+    "registerTitle": "Konto erstellen",
+    "forgotTitle": "Passwort vergessen",
+    "resetTitle": "Neues Passwort wählen",
+    "confirmTitle": "E-Mail bestätigen",
+    "accountTitle": "Konto",
+    "identifier": "E-Mail oder Handynummer",
+    "email": "E-Mail",
+    "phone": "Handynummer",
+    "password": "Passwort",
+    "newPassword": "Neues Passwort",
+    "displayName": "Name (optional)",
+    "rememberMe": "Angemeldet bleiben",
+    "passwordHint": "Mindestens 12 Zeichen mit einer Zahl. Ein kurzer Satz, den Sie sich merken, ist das beste Passwort.",
+    "submitLogin": "Anmelden",
+    "submitRegister": "Konto erstellen",
+    "submitForgot": "Link senden",
+    "submitReset": "Neues Passwort speichern",
+    "logout": "Abmelden",
+    "noAccount": "Noch kein Konto?",
+    "haveAccount": "Schon ein Konto?",
+    "forgotLink": "Passwort vergessen?",
+    "forgotSent": "Falls ein Konto diese E-Mail-Adresse nutzt, ist ein Link unterwegs.",
+    "resetDone": "Ihr Passwort wurde geändert. Sie können sich jetzt anmelden.",
+    "confirming": "Wird bestätigt…",
+    "confirmOk": "Ihre E-Mail-Adresse ist bestätigt.",
+    "emailNotConfirmed": "Ihre E-Mail-Adresse ist noch nicht bestätigt.",
+    "resendConfirmation": "Bestätigungs-E-Mail erneut senden",
+    "resendSent": "Die Bestätigungs-E-Mail wurde erneut gesendet.",
+    "signedInAs": "Angemeldet als",
+    "working": "Bitte warten…",
+    "errors": {
+      "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+      "network": "Der Shop ist nicht erreichbar. Prüfen Sie Ihre Internetverbindung.",
+      "too_many_requests": "Zu viele Versuche. Bitte versuchen Sie es gleich noch einmal.",
+      "invalid_credentials": "E-Mail/Nummer oder Passwort ist nicht korrekt.",
+      "locked_out": "Zu viele Fehlversuche: Das Konto ist für 15 Minuten gesperrt.",
+      "two_factor_required": "Dieses Konto nutzt die Zwei-Schritt-Anmeldung.",
+      "not_allowed": "Dieses Konto kann sich nicht anmelden.",
+      "email_taken": "Es gibt bereits ein Konto mit dieser E-Mail-Adresse.",
+      "phone_taken": "Es gibt bereits ein Konto mit dieser Nummer.",
+      "email_or_phone_required": "Geben Sie eine E-Mail-Adresse oder Handynummer ein.",
+      "email_invalid": "Die E-Mail-Adresse ist ungültig.",
+      "phone_invalid": "Die Handynummer ist ungültig.",
+      "password_required": "Geben Sie ein Passwort ein.",
+      "password_too_short": "Das Passwort braucht mindestens 12 Zeichen.",
+      "password_too_long": "Das Passwort ist zu lang.",
+      "password_needs_digit": "Das Passwort braucht mindestens eine Zahl.",
+      "password_rejected": "Dieses Passwort kann nicht verwendet werden.",
+      "invalid_token": "Dieser Link ist ungültig oder abgelaufen.",
+      "token_required": "Dieser Link ist unvollständig.",
+      "email_sign_up_disabled": "Registrierung per E-Mail ist nicht verfügbar.",
+      "phone_sign_up_disabled": "Registrierung per Handynummer ist nicht verfügbar.",
+      "identifier_required": "Geben Sie Ihre E-Mail-Adresse oder Handynummer ein.",
+      "identifier_invalid": "E-Mail-Adresse oder Handynummer ist ungültig.",
+      "display_name_too_long": "Der Name ist zu lang.",
+      "no_email": "Dieses Konto hat keine E-Mail-Adresse.",
+      "not_found": "Konto nicht gefunden.",
+      "origin_rejected": "Anfrage aus nicht vertrauenswürdiger Quelle abgelehnt."
+    }
+  }
 }

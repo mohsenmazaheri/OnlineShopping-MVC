@@ -1,11 +1,85 @@
 {
-  "meta": { "description": "Easy, fast and secure online shopping" },
+  "meta": {
+    "description": "Easy, fast and secure online shopping"
+  },
   "home": {
     "categories": "Categories",
     "noCategories": "No categories yet.",
     "loading": "Loading…",
     "unavailable": "The shop is temporarily unavailable. Please try again shortly."
   },
-  "offline": { "title": "You are offline", "body": "Reload the page once you are back online." },
-  "notFound": { "title": "Page not found", "home": "Back to the home page" }
+  "offline": {
+    "title": "You are offline",
+    "body": "Reload the page once you are back online."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "home": "Back to the home page"
+  },
+  "header": {
+    "signIn": "Sign in | Register",
+    "myAccount": "My account"
+  },
+  "account": {
+    "loginTitle": "Sign in",
+    "registerTitle": "Create an account",
+    "forgotTitle": "Forgot your password",
+    "resetTitle": "Choose a new password",
+    "confirmTitle": "Confirm email",
+    "accountTitle": "Account",
+    "identifier": "Email or mobile number",
+    "email": "Email",
+    "phone": "Mobile number",
+    "password": "Password",
+    "newPassword": "New password",
+    "displayName": "Name (optional)",
+    "rememberMe": "Remember me",
+    "passwordHint": "At least 12 characters including a number. A short sentence you remember makes the best password.",
+    "submitLogin": "Sign in",
+    "submitRegister": "Create account",
+    "submitForgot": "Send reset link",
+    "submitReset": "Save new password",
+    "logout": "Sign out",
+    "noAccount": "No account yet?",
+    "haveAccount": "Already have an account?",
+    "forgotLink": "Forgot your password?",
+    "forgotSent": "If an account uses this email, a reset link is on its way.",
+    "resetDone": "Your password was changed. You can sign in now.",
+    "confirming": "Confirming…",
+    "confirmOk": "Your email is confirmed.",
+    "emailNotConfirmed": "Your email is not confirmed yet.",
+    "resendConfirmation": "Send the confirmation email again",
+    "resendSent": "The confirmation email was sent again.",
+    "signedInAs": "Signed in as",
+    "working": "Please wait…",
+    "errors": {
+      "generic": "Something went wrong. Please try again.",
+      "network": "Could not reach the shop. Check your internet connection.",
+      "too_many_requests": "Too many attempts. Please try again in a little while.",
+      "invalid_credentials": "The email/number or password is not correct.",
+      "locked_out": "Too many failed attempts: the account is locked for 15 minutes.",
+      "two_factor_required": "This account uses two-step sign-in.",
+      "not_allowed": "This account cannot sign in.",
+      "email_taken": "An account with this email already exists.",
+      "phone_taken": "An account with this number already exists.",
+      "email_or_phone_required": "Enter an email address or a mobile number.",
+      "email_invalid": "The email address is not valid.",
+      "phone_invalid": "The mobile number is not valid.",
+      "password_required": "Enter a password.",
+      "password_too_short": "The password needs at least 12 characters.",
+      "password_too_long": "The password is too long.",
+      "password_needs_digit": "The password needs at least one number.",
+      "password_rejected": "This password cannot be used.",
+      "invalid_token": "This link is invalid or has expired.",
+      "token_required": "This link is incomplete.",
+      "email_sign_up_disabled": "Sign-up with email is not available.",
+      "phone_sign_up_disabled": "Sign-up with a mobile number is not available.",
+      "identifier_required": "Enter your email or mobile number.",
+      "identifier_invalid": "The email or mobile number is not valid.",
+      "display_name_too_long": "The name is too long.",
+      "no_email": "This account has no email address.",
+      "not_found": "Account not found.",
+      "origin_rejected": "Request from an untrusted source was rejected."
+    }
+  }
 }

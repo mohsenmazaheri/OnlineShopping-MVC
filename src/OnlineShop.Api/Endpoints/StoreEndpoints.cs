@@ -1,11 +1,16 @@
 using Microsoft.Extensions.Options;
 using OnlineShop.Api.Common;
+using OnlineShop.Application.Accounts;
 using OnlineShop.Application.Catalog;
 using OnlineShop.Application.Common;
+using OnlineShop.Application.Notifications;
 
 namespace OnlineShop.Api.Endpoints;
 
-public sealed record StoreInfoResponse(string Name, string DefaultLocale, IReadOnlyList<string> Locales);
+/// <summary>Sign-up methods currently available (phone needs a configured SMS provider).</summary>
+public sealed record SignUpMethods(bool Email, bool Phone);
+
+public sealed record StoreInfoResponse(string Name, string DefaultLocale, IReadOnlyList<string> Locales, SignUpMethods SignUp);
 
 /// <summary>Public, read-only storefront endpoints (no authentication).</summary>
 public static class StoreEndpoints
@@ -14,13 +19,14 @@ public static class StoreEndpoints
     {
         var group = app.MapGroup("/api/v1").WithTags("Storefront");
 
-        group.MapGet("/store", (IOptions<StoreOptions> options) =>
+        group.MapGet("/store", (IOptions<StoreOptions> options, IOptions<AuthOptions> auth, ISmsCapability sms) =>
             {
                 var store = options.Value;
-                return TypedResults.Ok(new StoreInfoResponse(store.Name, store.DefaultLocale, store.LocaleList));
+                var signUp = new SignUpMethods(auth.Value.EmailSignUp, auth.Value.PhoneSignUp && sms.IsEnabled);
+                return TypedResults.Ok(new StoreInfoResponse(store.Name, store.DefaultLocale, store.LocaleList, signUp));
             })
             .WithName("GetStoreInfo")
-            .WithSummary("Store name and the locales it offers.");
+            .WithSummary("Store name, the locales it offers and the available sign-up methods.");
 
         group.MapGet("/catalog/categories", async (ICategoryQueries queries, CancellationToken ct) =>
                 TypedResults.Ok(await queries.GetMenuAsync(ct)))

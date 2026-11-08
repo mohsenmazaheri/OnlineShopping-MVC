@@ -39,6 +39,20 @@ services:
       Store__Name: ${STORE_NAME:-Online Shop}
       Store__Locales: ${STORE_LOCALES:-fa,en}
       Store__DefaultLocale: ${DEFAULT_LOCALE:-fa}
+      # Links in emails and the only origin allowed to send state-changing requests (CSRF check).
+      Store__PublicUrl: ${SITE_URL:?Set SITE_URL in deploy/.env}
+      Store__PhoneRegion: ${PHONE_REGION:-IR}
+      Auth__EmailSignUp: ${AUTH_EMAIL_SIGN_UP:-true}
+      Auth__PhoneSignUp: ${AUTH_PHONE_SIGN_UP:-true}
+      # Only for a plain-HTTP test instance set this to false (cookies would otherwise not be sent).
+      Auth__SecureCookies: ${AUTH_SECURE_COOKIES:-true}
+      Email__Delivery: ${EMAIL_DELIVERY:-Smtp}
+      Email__FromAddress: ${EMAIL_FROM_ADDRESS:-no-reply@localhost}
+      Email__FromName: ${STORE_NAME:-Online Shop}
+      Email__SmtpHost: ${SMTP_HOST:-}
+      Email__SmtpPort: ${SMTP_PORT:-587}
+      Email__SmtpUser: ${SMTP_USER:-}
+      Email__SmtpPassword: ${SMTP_PASSWORD:-}
       # The API is reachable only from the web container on this private network, so it may trust
       # X-Forwarded-For; otherwise every visitor would share the web container's rate-limit bucket.
       ReverseProxy__TrustForwardedHeadersFromAnyHost: "true"

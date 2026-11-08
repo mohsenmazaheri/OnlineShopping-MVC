@@ -70,3 +70,6 @@ next-env.d.ts
 .env
 .env.*
 !.env.example
+
+# Local API data (development emails)
+**/App_Data/

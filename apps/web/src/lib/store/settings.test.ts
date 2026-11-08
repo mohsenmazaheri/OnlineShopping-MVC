@@ -3,10 +3,13 @@ import { fallbackStore, toStoreSettings } from "./settings";
 
 describe("store settings from the API", () => {
   it("keeps valid API settings", () => {
-    expect(toStoreSettings({ name: " Shop ", defaultLocale: "en", locales: ["fa", "en"] })).toEqual({
+    expect(
+      toStoreSettings({ name: " Shop ", defaultLocale: "en", locales: ["fa", "en"], signUp: { email: true, phone: true } }),
+    ).toEqual({
       name: "Shop",
       defaultLocale: "en",
       locales: ["fa", "en"],
+      signUp: { email: true, phone: true },
     });
   });
 
@@ -16,6 +19,10 @@ describe("store settings from the API", () => {
 
   it("moves the default locale to the first offered one when it is not offered", () => {
     expect(toStoreSettings({ name: "S", defaultLocale: "ar", locales: ["hy", "en"] }).defaultLocale).toBe("hy");
+  });
+
+  it("assumes email sign-up only when the API does not say", () => {
+    expect(toStoreSettings({ name: "S", locales: ["en"] }).signUp).toEqual({ email: true, phone: false });
   });
 
   it("falls back when the API is unreachable or returns nothing usable", () => {

@@ -5,7 +5,7 @@ import type { StoreSettings } from "@/lib/store/settings";
 /** Sizes of the generated app icons (src/app/icon.tsx); 192 and 512 are required for installability. */
 export const iconSizes = [192, 512] as const;
 
-export function buildManifest(store: StoreSettings): MetadataRoute.Manifest {
+export function buildManifest(store: Pick<StoreSettings, "name" | "defaultLocale">): MetadataRoute.Manifest {
   const locale = store.defaultLocale;
   return {
     name: store.name,

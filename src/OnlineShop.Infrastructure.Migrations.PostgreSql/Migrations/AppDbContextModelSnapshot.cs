@@ -670,8 +670,13 @@ namespace OnlineShop.Infrastructure.Migrations.PostgreSql.Migrations
                         .HasColumnType("text")
                         .HasColumnName("concurrency_stamp");
 
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_utc");
+
                     b.Property<string>("DisplayName")
-                        .HasColumnType("text")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("display_name");
 
                     b.Property<string>("Email")
@@ -706,12 +711,18 @@ namespace OnlineShop.Infrastructure.Migrations.PostgreSql.Migrations
                         .HasColumnName("password_hash");
 
                     b.Property<string>("PhoneNumber")
-                        .HasColumnType("text")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
                         .HasColumnName("phone_number");
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("boolean")
                         .HasColumnName("phone_number_confirmed");
+
+                    b.Property<string>("PreferredLocale")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)")
+                        .HasColumnName("preferred_locale");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text")
@@ -730,11 +741,18 @@ namespace OnlineShop.Infrastructure.Migrations.PostgreSql.Migrations
                         .HasName("pk_users");
 
                     b.HasIndex("NormalizedEmail")
-                        .HasDatabaseName("EmailIndex");
+                        .IsUnique()
+                        .HasDatabaseName("ux_users_normalized_email")
+                        .HasFilter("normalized_email IS NOT NULL");
 
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
+
+                    b.HasIndex("PhoneNumber")
+                        .IsUnique()
+                        .HasDatabaseName("ux_users_phone_number")
+                        .HasFilter("phone_number IS NOT NULL");
 
                     b.ToTable("users", (string)null);
                 });

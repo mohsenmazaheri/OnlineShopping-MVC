@@ -30,6 +30,24 @@ export function localeRedirectTarget(
   return `/${store.defaultLocale}${rest}${search}`;
 }
 
+/** Account pages anyone may open (signing in, recovering access). */
+const publicAccountPages = ["login", "register", "forgot-password", "reset-password", "confirm-email"];
+
+/**
+ * Login redirect for signed-out visitors to private account pages (/{locale}/account/...), or null.
+ * Only checks that a session cookie exists (fast, no API call); the page itself still verifies the session.
+ */
+export function accountRedirectTarget(pathname: string, search: string, hasSessionCookie: boolean): string | null {
+  if (hasSessionCookie) return null;
+
+  // "account" must be a whole path segment: /fa/accounting is not an account page.
+  const match = /^\/([a-z]{2})\/account(?:\/([^/?#]+))?(?:\/|$)/.exec(pathname);
+  if (!match || !isLocale(match[1])) return null;
+  if (match[2] && publicAccountPages.includes(match[2])) return null;
+
+  return `/${match[1]}/account/login?returnUrl=${encodeURIComponent(pathname + search)}`;
+}
+
 /** Requests the proxy forwards to the .NET API (same origin for the browser: no CORS, API stays private). */
 export function isApiPath(pathname: string): boolean {
   return pathname.startsWith("/api/v1/");
