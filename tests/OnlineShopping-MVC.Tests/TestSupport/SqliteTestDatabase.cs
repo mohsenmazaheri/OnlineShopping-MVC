@@ -31,6 +31,7 @@ public sealed class SqliteTestDatabase : IDisposable
 
     public DbContextOptions<AppDbContext> Options => new DbContextOptionsBuilder<AppDbContext>()
         .UseSqlite(_connection)
+        .UseSnakeCaseNamingConvention()
         .AddInterceptors(new AuditableEntityInterceptor(Clock))
         .Options;
 

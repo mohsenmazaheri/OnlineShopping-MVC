@@ -9,9 +9,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<AuditableEntityInterceptor>();
 
-// EF Core (SQL Server)
+// EF Core (PostgreSQL). The connection string (with password) comes from user-secrets or environment variables.
 builder.Services.AddDbContext<AppDbContext>((sp, opts) =>
-    opts.UseSqlServer(builder.Configuration.GetConnectionString("Default"))
+    opts.UseNpgsql(builder.Configuration.GetConnectionString("Default"))
+        .UseSnakeCaseNamingConvention()
         .AddInterceptors(sp.GetRequiredService<AuditableEntityInterceptor>()));
 
 builder.Services.Configure<SeedOptions>(builder.Configuration.GetSection(SeedOptions.SectionName));

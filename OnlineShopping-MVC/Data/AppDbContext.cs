@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using OnlineShopping_MVC.Models.Domain;
@@ -8,8 +9,11 @@ namespace OnlineShopping_MVC.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<AppUser>(options)
 {
-    /// <summary>Filter for unique indexes so a soft-deleted row does not block reusing its value.</summary>
-    internal const string NotDeletedFilter = "[IsDeleted] = 0";
+    /// <summary>
+    /// Filter for unique indexes so a soft-deleted row does not block reusing its value.
+    /// Column names are snake_case (<c>UseSnakeCaseNamingConvention</c>); the SQL is valid in PostgreSQL and SQLite.
+    /// </summary>
+    internal const string NotDeletedFilter = "is_deleted = false";
 
     internal const string OrderStatusCheckConstraintName = "CK_Orders_Status";
 
@@ -25,7 +29,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
-        // Money columns: without this SQL Server silently truncates to decimal(18,2) with a model warning.
+        // Money columns: a fixed precision keeps every database provider consistent (no unbounded numeric).
         configurationBuilder.Properties<decimal>().HavePrecision(18, 2);
     }
 
@@ -33,6 +37,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     {
         base.OnModelCreating(b);
 
+        ConfigureIdentityTables(b);
         ConfigureCatalog(b);
         ConfigureCart(b);
         ConfigureOrders(b);
@@ -41,7 +46,22 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
 
     /// <summary>The SQL check that keeps the Status column in sync with every <see cref="OrderStatus"/> value.</summary>
     internal static string BuildOrderStatusCheckSql() =>
-        $"[Status] IN ({string.Join(", ", Enum.GetNames<OrderStatus>().Select(n => $"'{n}'"))})";
+        $"status IN ({string.Join(", ", Enum.GetNames<OrderStatus>().Select(n => $"'{n}'"))})";
+
+    /// <summary>
+    /// Identity sets explicit PascalCase table names ("AspNetUsers") that the snake_case convention does not rename;
+    /// in PostgreSQL those would need quoting in every hand-written query.
+    /// </summary>
+    private static void ConfigureIdentityTables(ModelBuilder b)
+    {
+        b.Entity<AppUser>().ToTable("users");
+        b.Entity<IdentityRole>().ToTable("roles");
+        b.Entity<IdentityUserRole<string>>().ToTable("user_roles");
+        b.Entity<IdentityUserClaim<string>>().ToTable("user_claims");
+        b.Entity<IdentityUserLogin<string>>().ToTable("user_logins");
+        b.Entity<IdentityUserToken<string>>().ToTable("user_tokens");
+        b.Entity<IdentityRoleClaim<string>>().ToTable("role_claims");
+    }
 
     private static void ConfigureCatalog(ModelBuilder b)
     {
@@ -83,11 +103,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
                 .WithMany(pg => pg.Products)
                 .HasForeignKey(p => p.ProductGroupId)
                 .OnDelete(DeleteBehavior.Cascade);
-            // Seller is an Identity user; no navigation so the domain stays independent of Identity.
-            e.HasOne<AppUser>()
-                .WithMany()
-                .HasForeignKey(p => p.SellerId)
-                .OnDelete(DeleteBehavior.Restrict);
         });
 
         b.Entity<ProductImage>(e =>

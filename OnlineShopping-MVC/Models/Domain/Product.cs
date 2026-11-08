@@ -13,6 +13,5 @@ public class Product : BaseEntity
     public Guid ProductGroupId { get; set; }
     public ProductGroup ProductGroup { get; set; } = default!;
 
-    public string SellerId { get; set; } = string.Empty; // Identity user id
     public ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
 }

@@ -24,6 +24,7 @@ public class DataSeederTests : IDisposable
         services.AddLogging();
         services.AddDbContext<AppDbContext>(o => o
             .UseSqlite(_database.Connection)
+            .UseSnakeCaseNamingConvention()
             .AddInterceptors(new AuditableEntityInterceptor(_database.Clock)));
         services.AddIdentityCore<AppUser>(o =>
             {
@@ -49,7 +50,7 @@ public class DataSeederTests : IDisposable
 
         using var scope = _services.CreateScope();
         var roles = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-        foreach (var role in new[] { AppRoles.Admin, AppRoles.Seller, AppRoles.Customer })
+        foreach (var role in AppRoles.All)
             Assert.True(await roles.RoleExistsAsync(role), $"Role {role} missing");
     }
 
@@ -62,7 +63,7 @@ public class DataSeederTests : IDisposable
         await SeedAsync(options);
 
         await using var db = _database.CreateContext();
-        Assert.Equal(3, await db.Roles.CountAsync());
+        Assert.Equal(AppRoles.All.Count, await db.Roles.CountAsync());
         Assert.Equal(1, await db.Users.CountAsync());
     }
 

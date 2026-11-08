@@ -8,7 +8,8 @@ namespace OnlineShopping_MVC.Models.Domain;
 /// </summary>
 public abstract class BaseEntity
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    // Version 7 GUIDs are time-ordered, so new rows append to the end of the primary-key index.
+    public Guid Id { get; set; } = Guid.CreateVersion7();
     public DateTime CreatedUtc { get; set; }
     public DateTime? ModifiedUtc { get; set; }
     public bool IsDeleted { get; set; }

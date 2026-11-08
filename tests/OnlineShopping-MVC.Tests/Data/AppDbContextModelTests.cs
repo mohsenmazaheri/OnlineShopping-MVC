@@ -44,7 +44,6 @@ public class AppDbContextModelTests : IDisposable
     [Theory]
     [InlineData(typeof(Cart), nameof(Cart.CustomerId))]
     [InlineData(typeof(Order), nameof(Order.CustomerId))]
-    [InlineData(typeof(Product), nameof(Product.SellerId))]
     public void User_id_columns_are_foreign_keys_to_AspNetUsers(Type entity, string property)
     {
         using var db = _database.CreateContext();
@@ -127,7 +126,7 @@ public class AppDbContextModelTests : IDisposable
         db.Orders.Add(new Order { CustomerId = customer.Id, Status = OrderStatus.Shipped });
         await db.SaveChangesAsync();
 
-        var stored = await db.Database.SqlQueryRaw<string>("SELECT Status AS Value FROM Orders").SingleAsync();
+        var stored = await db.Database.SqlQueryRaw<string>("SELECT status AS \"Value\" FROM orders").SingleAsync();
 
         Assert.Equal("Shipped", stored);
     }

@@ -16,7 +16,6 @@ public sealed class DataSeeder(
     IOptions<SeedOptions> options,
     ILogger<DataSeeder> logger)
 {
-    internal static readonly string[] Roles = [AppRoles.Admin, AppRoles.Seller, AppRoles.Customer];
 
     private readonly SeedOptions _options = options.Value;
 
@@ -31,7 +30,7 @@ public sealed class DataSeeder(
 
     private async Task EnsureRolesAsync()
     {
-        foreach (var role in Roles)
+        foreach (var role in AppRoles.All)
         {
             if (!await roleManager.RoleExistsAsync(role))
                 EnsureSucceeded(await roleManager.CreateAsync(new IdentityRole(role)), $"create role '{role}'");
