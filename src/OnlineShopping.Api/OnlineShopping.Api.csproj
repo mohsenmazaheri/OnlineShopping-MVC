@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <UserSecretsId>d78666ca-5fa6-4f5a-9059-e8290d067e9f</UserSecretsId>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Write the OpenAPI document at build time; the Next.js app generates its typed client from it. -->
+    <OpenApiGenerateDocuments>true</OpenApiGenerateDocuments>
+    <OpenApiDocumentsDirectory>$(MSBuildThisFileDirectory)../../apps/web/openapi</OpenApiDocumentsDirectory>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OnlineShopping.Application\OnlineShopping.Application.csproj" />
+    <ProjectReference Include="..\OnlineShopping.Infrastructure\OnlineShopping.Infrastructure.csproj" />
+    <ProjectReference Include="..\OnlineShopping.Infrastructure.Migrations.PostgreSql\OnlineShopping.Infrastructure.Migrations.PostgreSql.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Serilog.AspNetCore" />
+  </ItemGroup>
+  <!--
+    One F5 for API + storefront (Debug only; Release builds and Docker images never contain it): the "API + web" launch
+    profile turns on the SPA proxy, which runs `npm run dev` in apps/web unless the storefront already answers, opens
+    the browser there, and stops it when debugging stops.
+  -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <SpaRoot>$(MSBuildThisFileDirectory)../../apps/web/</SpaRoot>
+    <SpaProxyServerUrl>http://localhost:3000</SpaProxyServerUrl>
+    <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
+    <!-- The first Next.js compile can take a while. -->
+    <SpaProxyTimeoutInSeconds>180</SpaProxyTimeoutInSeconds>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <PackageReference Include="Microsoft.AspNetCore.SpaProxy" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="OnlineShopping.UnitTests" />
+    <InternalsVisibleTo Include="OnlineShopping.IntegrationTests" />
+  </ItemGroup>
+</Project>

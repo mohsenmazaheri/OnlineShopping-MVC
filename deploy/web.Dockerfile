@@ -1,4 +1,4 @@
-# OnlineShop web (Next.js) — build from the repository root:
+# OnlineShopping web (Next.js) — build from the repository root:
 #   docker build -f deploy/web.Dockerfile -t onlineshop-web .
 # The image contains nothing shop-specific: store settings come from the API, the rest from runtime env vars.
 FROM node:26-alpine AS deps

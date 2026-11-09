@@ -5,6 +5,7 @@ import { useState, type FormEvent } from "react";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { nativeLanguageName } from "@/lib/i18n/display-names";
 import { FormAlert, FormField, SelectField, SubmitButton } from "./FormParts";
+import { PasswordField } from "./PasswordField";
 import { useApiForm } from "./useApiForm";
 
 type Texts = Dictionary["account"];
@@ -79,15 +80,16 @@ export function ChangePasswordForm({ texts }: { texts: Texts }) {
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-3">
       {formError && <FormAlert kind="error">{formError}</FormAlert>}
       {done && <FormAlert kind="success">{texts.passwordChanged}</FormAlert>}
-      <FormField label={texts.currentPassword} name="currentPassword" type="password" autoComplete="current-password" required error={fieldError("currentPassword")} />
-      <FormField
+      <PasswordField label={texts.currentPassword} name="currentPassword" autoComplete="current-password" required error={fieldError("currentPassword")} showLabel={texts.showPassword} hideLabel={texts.hidePassword} />
+      <PasswordField
         label={texts.newPassword}
         name="newPassword"
-        type="password"
         autoComplete="new-password"
         required
         hint={texts.passwordHint}
         error={fieldError("newPassword")}
+        showLabel={texts.showPassword}
+        hideLabel={texts.hidePassword}
       />
       <SubmitButton busy={busy} label={texts.changePassword} busyLabel={texts.working} />
     </form>

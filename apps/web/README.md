@@ -1,7 +1,7 @@
-# OnlineShop web (Next.js)
+# OnlineShopping web (Next.js)
 
 Storefront and (later) admin UI. Next.js 16 App Router with Cache Components, TypeScript, Tailwind CSS 4, PWA.
-It talks only to the .NET API (`src/OnlineShop.Api`), server-side; the browser reaches `/api/v1/*` through `src/proxy.ts`.
+It talks only to the .NET API (`src/OnlineShopping.Api`), server-side; the browser reaches `/api/v1/*` through `src/proxy.ts`.
 
 ```bash
 npm install
@@ -10,7 +10,7 @@ npm test             # Vitest
 npm run lint
 npm run typecheck    # next typegen + tsc
 npm run build        # works without a running API
-npm run gen:api      # regenerate src/lib/api/schema.d.ts from openapi/OnlineShop.Api.json (written by the API build)
+npm run gen:api      # regenerate src/lib/api/schema.d.ts from openapi/OnlineShopping.Api.json (written by the API build)
 ```
 
 Runtime environment variables (nothing shop-specific is baked into the build):

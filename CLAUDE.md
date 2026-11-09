@@ -4,7 +4,7 @@ This file guides Claude Code when working in this repository.
 
 ## Project overview
 
-**OnlineShop** is a single-store online shop for **small businesses** (few to moderate customers). It must be
+**OnlineShopping** is a single-store online shop for **small businesses** (few to moderate customers). It must be
 **cross-platform** (Linux and Windows servers), a **mobile-first PWA**, fast, and secure.
 
 Monorepo: an **ASP.NET Core 10 Web API** on **PostgreSQL 18** (Clean Architecture: Domain / Application /
@@ -77,27 +77,27 @@ Recorded decisions (details in the roadmap):
 ## Repository layout
 
 ```
-OnlineShop.sln                      # all .NET projects
+OnlineShopping.sln                  # all .NET projects
 Directory.Build.props               # net10.0, nullable, analyzers, warnings = errors
 Directory.Packages.props            # central NuGet versions (no Version= in csproj files)
 dotnet-tools.json                   # local tools (dotnet-ef 10.0.14)
 src/
-  OnlineShop.Domain/                # entities: Common/BaseEntity, Catalog/*, Sales/* — no dependencies
-  OnlineShop.Application/           # use cases (Catalog/CategoryQueries), Common/Result + AppError,
+  OnlineShopping.Domain/            # entities: Common/BaseEntity, Catalog/*, Sales/* — no dependencies
+  OnlineShopping.Application/       # use cases (Catalog/CategoryQueries), Common/Result + AppError,
                                     # IApplicationDbContext, StoreOptions, Authorization/AppRoles, AddApplication()
-  OnlineShop.Infrastructure/        # Persistence/AppDbContext (+ interceptor, seeding, DatabaseOptions),
+  OnlineShopping.Infrastructure/    # Persistence/AppDbContext (+ interceptor, seeding, DatabaseOptions),
                                     # Identity/AppUser, AddInfrastructure() (EF, Identity, Data Protection, health)
-  OnlineShop.Infrastructure.Migrations.PostgreSql/   # EF migrations for PostgreSQL
-  OnlineShop.Api/                   # Program.cs, Endpoints/, Security/ (headers, reverse proxy), Common/ResultExtensions
+  OnlineShopping.Infrastructure.Migrations.PostgreSql/   # EF migrations for PostgreSQL
+  OnlineShopping.Api/               # Program.cs, Endpoints/, Security/ (headers, reverse proxy), Common/ResultExtensions
 tests/
-  OnlineShop.UnitTests/             # xUnit; SQLite in-memory for EF; TestHost for middleware
-  OnlineShop.IntegrationTests/      # WebApplicationFactory + real PostgreSQL (fresh database per test class)
+  OnlineShopping.UnitTests/         # xUnit; SQLite in-memory for EF; TestHost for middleware
+  OnlineShopping.IntegrationTests/  # WebApplicationFactory + real PostgreSQL (fresh database per test class)
 apps/web/                           # Next.js 16 (see apps/web/README.md)
   src/app/[locale]/                 # pages (root layout lives here: lang/dir per locale)
   src/app/{robots,sitemap,manifest,icon}.ts(x), api/revalidate/route.ts
   src/proxy.ts                      # runtime: API forwarding, locale redirects, security headers, noindex
   src/lib/                          # api/ (typed client, `use cache` fetchers), store/, i18n/, seo/, security/, pwa/
-  openapi/OnlineShop.Api.json       # written by the API build; source of src/lib/api/schema.d.ts
+  openapi/OnlineShopping.Api.json   # written by the API build; source of src/lib/api/schema.d.ts
 deploy/                             # api/web Dockerfiles, docker-compose.yml, .env.example, nginx.conf, README
 docs/                               # ROADMAP.md, SEO-MARKETING.md
 ```
@@ -107,12 +107,13 @@ docs/                               # ROADMAP.md, SEO-MARKETING.md
 ```bash
 # .NET
 dotnet tool restore
-dotnet build OnlineShop.sln                     # also regenerates apps/web/openapi/OnlineShop.Api.json
-dotnet test OnlineShop.sln
+dotnet build OnlineShopping.sln                 # also regenerates apps/web/openapi/OnlineShopping.Api.json
+dotnet test OnlineShopping.sln
 dotnet test --filter "FullyQualifiedName~CategoryQueriesTests"
-dotnet run --project src/OnlineShop.Api         # http://localhost:5087 (migrates the dev DB in Development)
-dotnet tool run dotnet-ef migrations add <Name> --project src/OnlineShop.Infrastructure.Migrations.PostgreSql --startup-project src/OnlineShop.Api
-dotnet tool run dotnet-ef migrations has-pending-model-changes --project src/OnlineShop.Infrastructure.Migrations.PostgreSql --startup-project src/OnlineShop.Api
+dotnet run --project src/OnlineShopping.Api     # http://localhost:5087 (migrates the dev DB in Development)
+dotnet run --project src/OnlineShopping.Api --launch-profile "API + web"   # API + Next.js dev server (VS: F5, Debug-only SpaProxy)
+dotnet tool run dotnet-ef migrations add <Name> --project src/OnlineShopping.Infrastructure.Migrations.PostgreSql --startup-project src/OnlineShopping.Api
+dotnet tool run dotnet-ef migrations has-pending-model-changes --project src/OnlineShopping.Infrastructure.Migrations.PostgreSql --startup-project src/OnlineShopping.Api
 
 # Next.js (in apps/web; Node is at C:\Program Files\nodejs — add it to PATH in Git Bash)
 npm run dev | npm test | npm run lint | npm run typecheck | npm run build
@@ -134,10 +135,14 @@ After an API contract change: build the API, run `npm run gen:api`, commit `open
 - Secrets (never print them, never write them to tracked files):
   - API user-secrets: `ConnectionStrings:Default`, `Postgres:SuperuserPassword` (admin tasks only),
     optionally `Database:AdminEmail` / `Database:AdminPassword`.
-  - Integration-test user-secrets (`tests/OnlineShop.IntegrationTests`): `IntegrationTests:AdminConnection`
+  - Integration-test user-secrets (`tests/OnlineShopping.IntegrationTests`): `IntegrationTests:AdminConnection`
     (CI uses the `INTEGRATIONTESTS__ADMINCONNECTION` env var).
 - No Docker on this machine yet; Docker images are built by CI.
 - The built-in browser pane does not allow service workers; check PWA behaviour in a real browser.
+- The Claude desktop app is MSIX-packaged: anything it (or a process it starts) writes under `%APPDATA%` goes to
+  `%LOCALAPPDATA%\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\…` and is invisible to Visual Studio and normal
+  terminals. So `dotnet user-secrets set` run from Claude does **not** reach Visual Studio. Ask the user to set
+  secrets in their own terminal (or Visual Studio's), never print them; Claude-started processes still see both.
 
 ## Backend conventions
 
@@ -157,6 +162,10 @@ After an API contract change: build the API, run `npm run gen:api`, commit `open
 - **Options:** bind + `ValidateDataAnnotations` + `ValidateOnStart`. Configuration lists merge by index across sources,
   so list-like settings that operators override are comma-separated strings (see `StoreOptions.Locales`).
 - Logging via `[LoggerMessage]` source-generated methods (analyzer CA1848).
+- The projects were renamed from `OnlineShop` to `OnlineShopping`. Some runtime names deliberately keep the old name;
+  never "fix" them: the Data Protection application name `OnlineShop` (changing it invalidates every cookie and
+  token), the lower-case names (`onlineshop_*` databases, `onlineshop` login, `os_session` cookie,
+  `onlineshop-integration-tests` user-secrets id, Docker image and npm package names).
 - Code style: file-scoped namespaces, primary constructors, `sealed` by default, `required`/`= default!`.
 
 ## Accounts and authorization

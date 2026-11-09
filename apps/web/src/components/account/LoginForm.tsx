@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { FormAlert, FormField, SubmitButton } from "./FormParts";
+import { PasswordField } from "./PasswordField";
 import { TWO_FACTOR_REQUIRED, useApiForm } from "./useApiForm";
 
 type Props = {
@@ -39,7 +40,7 @@ export function LoginForm({ locale, texts, returnTo, onTwoFactorRequired }: Prop
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
       {formError && <FormAlert kind="error">{formError}</FormAlert>}
       <FormField label={texts.identifier} name="identifier" autoComplete="username" inputMode="email" required error={fieldError("identifier")} />
-      <FormField label={texts.password} name="password" type="password" autoComplete="current-password" required error={fieldError("password")} />
+      <PasswordField label={texts.password} name="password" autoComplete="current-password" required error={fieldError("password")} showLabel={texts.showPassword} hideLabel={texts.hidePassword} />
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" name="rememberMe" className="h-4 w-4 accent-[var(--primary)]" />
         {texts.rememberMe}

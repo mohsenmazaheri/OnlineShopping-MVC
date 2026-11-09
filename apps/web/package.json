@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "typecheck": "next typegen && tsc --noEmit",
-    "gen:api": "openapi-typescript openapi/OnlineShop.Api.json -o src/lib/api/schema.d.ts"
+    "gen:api": "openapi-typescript openapi/OnlineShopping.Api.json -o src/lib/api/schema.d.ts"
   },
   "dependencies": {
     "next": "16.4.5",

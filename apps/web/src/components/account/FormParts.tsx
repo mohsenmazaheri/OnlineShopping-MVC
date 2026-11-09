@@ -5,25 +5,37 @@ type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
   name: string;
   error?: string;
   hint?: string;
+  /** A control shown inside the input at its end side (e.g. the show-password button); start/end follow RTL. */
+  adornment?: ReactNode;
 };
 
 /** Labelled input with an accessible error/hint (aria-describedby), large touch target for mobile. */
-export function FormField({ label, name, error, hint, id, className, ...input }: FieldProps) {
+export function FormField({ label, name, error, hint, adornment, id, className, ...input }: FieldProps) {
   const inputId = id ?? `field-${name}`;
   const describedBy = [error ? `${inputId}-error` : null, hint ? `${inputId}-hint` : null].filter(Boolean).join(" ") || undefined;
+  const field = (
+    <input
+      id={inputId}
+      name={name}
+      aria-invalid={error ? true : undefined}
+      aria-describedby={describedBy}
+      className={`h-12 rounded-xl border border-border bg-surface px-3 text-base outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 aria-[invalid=true]:border-red-500 ${adornment ? "w-full pe-12" : ""} ${className ?? ""}`}
+      {...input}
+    />
+  );
   return (
     <div className="flex flex-col gap-1">
       <label htmlFor={inputId} className="text-sm font-medium">
         {label}
       </label>
-      <input
-        id={inputId}
-        name={name}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy}
-        className={`h-12 rounded-xl border border-border bg-surface px-3 text-base outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 aria-[invalid=true]:border-red-500 ${className ?? ""}`}
-        {...input}
-      />
+      {adornment ? (
+        <div className="relative">
+          {field}
+          <div className="absolute inset-y-0 end-1 flex items-center">{adornment}</div>
+        </div>
+      ) : (
+        field
+      )}
       {hint && !error && (
         <p id={`${inputId}-hint`} className="text-xs text-muted">
           {hint}
