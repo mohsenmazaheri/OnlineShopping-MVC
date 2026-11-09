@@ -1,4 +1,4 @@
-# OnlineShop
+# OnlineShopping
 
 A fast, secure, multilingual online shop for small businesses: **.NET 10 Web API + PostgreSQL** backend and a
 **Next.js PWA** storefront, in one repository. Runs on Linux and Windows (Docker).
@@ -21,8 +21,8 @@ Requirements: .NET SDK 10, Node.js 26 LTS, PostgreSQL 18.
 
 ```bash
 dotnet tool restore
-dotnet user-secrets set "ConnectionStrings:Default" "Host=localhost;Database=onlineshop_dev;Username=...;Password=..." --project src/OnlineShop.Api
-dotnet run --project src/OnlineShop.Api          # http://localhost:5087, migrates the dev database
+dotnet user-secrets set "ConnectionStrings:Default" "Host=localhost;Database=onlineshop_dev;Username=...;Password=..." --project src/OnlineShopping.Api
+dotnet run --project src/OnlineShopping.Api      # http://localhost:5087, migrates the dev database
 cd apps/web && npm install && npm run dev        # http://localhost:3000
 ```
 

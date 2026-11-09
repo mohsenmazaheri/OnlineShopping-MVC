@@ -9,7 +9,7 @@ import { getDictionary } from "./dictionaries";
  * without a translation fails here.
  */
 function apiAccountErrorCodes(): string[] {
-  const root = fileURLToPath(new URL("../../../../../src/OnlineShop.Application/", import.meta.url));
+  const root = fileURLToPath(new URL("../../../../../src/OnlineShopping.Application/", import.meta.url));
   const files = readdirSync(root, { recursive: true, encoding: "utf8" }).filter(
     (file) => file.endsWith(".cs") && !/(^|[\\/])(bin|obj)[\\/]/.test(file),
   );

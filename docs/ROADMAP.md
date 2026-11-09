@@ -91,12 +91,12 @@
 
 ```
 apps/web/                                   Next.js 16 (TypeScript, App Router, Cache Components, PWA)
-src/OnlineShop.Domain/                      موجودیت‌ها (بدون وابستگی)
-src/OnlineShop.Application/                 Use caseها، Result<T>، IApplicationDbContext، StoreOptions
-src/OnlineShop.Infrastructure/              EF Core/PostgreSQL، Identity، Data Protection، Seeder
-src/OnlineShop.Infrastructure.Migrations.PostgreSql/
-src/OnlineShop.Api/                         ASP.NET Core Web API
-tests/OnlineShop.UnitTests, tests/OnlineShop.IntegrationTests (PostgreSQL واقعی)
+src/OnlineShopping.Domain/                  موجودیت‌ها (بدون وابستگی)
+src/OnlineShopping.Application/             Use caseها، Result<T>، IApplicationDbContext، StoreOptions
+src/OnlineShopping.Infrastructure/          EF Core/PostgreSQL، Identity، Data Protection، Seeder
+src/OnlineShopping.Infrastructure.Migrations.PostgreSql/
+src/OnlineShopping.Api/                     ASP.NET Core Web API
+tests/OnlineShopping.UnitTests, tests/OnlineShopping.IntegrationTests (PostgreSQL واقعی)
 deploy/                                     Dockerfileها، docker-compose، نمونهٔ nginx
 ```
 
