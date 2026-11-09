@@ -26,4 +26,11 @@ dotnet run --project src/OnlineShopping.Api      # http://localhost:5087, migrat
 cd apps/web && npm install && npm run dev        # http://localhost:3000
 ```
 
+**One F5 for both:** in Visual Studio pick the **"API + web"** launch profile of `OnlineShopping.Api` (the first
+profile). It starts the API, runs `npm run dev` in `apps/web` (unless the storefront is already running), opens the
+browser on the storefront and stops Next.js when debugging stops. The same from a terminal:
+`dotnet run --project src/OnlineShopping.Api --launch-profile "API + web"`. Run `npm install` in `apps/web` once first.
+The `http` profile starts the API alone. If the connection string is missing, startup stops with the exact
+user-secrets file it looked for.
+
 Tests: `dotnet test` (integration tests need `IntegrationTests:AdminConnection`, see CLAUDE.md) and `npm test` in `apps/web`.

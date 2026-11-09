@@ -111,6 +111,7 @@ dotnet build OnlineShopping.sln                 # also regenerates apps/web/open
 dotnet test OnlineShopping.sln
 dotnet test --filter "FullyQualifiedName~CategoryQueriesTests"
 dotnet run --project src/OnlineShopping.Api     # http://localhost:5087 (migrates the dev DB in Development)
+dotnet run --project src/OnlineShopping.Api --launch-profile "API + web"   # API + Next.js dev server (VS: F5, Debug-only SpaProxy)
 dotnet tool run dotnet-ef migrations add <Name> --project src/OnlineShopping.Infrastructure.Migrations.PostgreSql --startup-project src/OnlineShopping.Api
 dotnet tool run dotnet-ef migrations has-pending-model-changes --project src/OnlineShopping.Infrastructure.Migrations.PostgreSql --startup-project src/OnlineShopping.Api
 
@@ -138,6 +139,10 @@ After an API contract change: build the API, run `npm run gen:api`, commit `open
     (CI uses the `INTEGRATIONTESTS__ADMINCONNECTION` env var).
 - No Docker on this machine yet; Docker images are built by CI.
 - The built-in browser pane does not allow service workers; check PWA behaviour in a real browser.
+- The Claude desktop app is MSIX-packaged: anything it (or a process it starts) writes under `%APPDATA%` goes to
+  `%LOCALAPPDATA%\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\…` and is invisible to Visual Studio and normal
+  terminals. So `dotnet user-secrets set` run from Claude does **not** reach Visual Studio. Ask the user to set
+  secrets in their own terminal (or Visual Studio's), never print them; Claude-started processes still see both.
 
 ## Backend conventions
 

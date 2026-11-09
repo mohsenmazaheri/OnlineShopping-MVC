@@ -1,6 +1,9 @@
+using System.Reflection;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Configuration.UserSecrets;
+using OnlineShopping.Api.Common;
 using OnlineShopping.Api.Endpoints;
 using OnlineShopping.Api.Security;
 using OnlineShopping.Application;
@@ -59,6 +62,12 @@ builder.Services.AddHsts(options =>
 });
 
 var app = builder.Build();
+
+// Checked after Build: only then is all configuration in place (tests add theirs while the host is built).
+// Build-time OpenAPI generation runs without a database; everything else needs a connection string.
+if (!isOpenApiGeneration && ConnectionStringCheck.Problem(app.Configuration, app.Environment,
+        typeof(Program).Assembly.GetCustomAttribute<UserSecretsIdAttribute>()?.UserSecretsId) is { } problem)
+    throw new InvalidOperationException(problem);
 
 app.UseForwardedHeaders();
 app.UseMiddleware<PublicOriginMiddleware>();

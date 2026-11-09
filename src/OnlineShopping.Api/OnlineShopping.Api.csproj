@@ -23,6 +23,21 @@
     </PackageReference>
     <PackageReference Include="Serilog.AspNetCore" />
   </ItemGroup>
+  <!--
+    One F5 for API + storefront (Debug only; Release builds and Docker images never contain it): the "API + web" launch
+    profile turns on the SPA proxy, which runs `npm run dev` in apps/web unless the storefront already answers, opens
+    the browser there, and stops it when debugging stops.
+  -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <SpaRoot>$(MSBuildThisFileDirectory)../../apps/web/</SpaRoot>
+    <SpaProxyServerUrl>http://localhost:3000</SpaProxyServerUrl>
+    <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
+    <!-- The first Next.js compile can take a while. -->
+    <SpaProxyTimeoutInSeconds>180</SpaProxyTimeoutInSeconds>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <PackageReference Include="Microsoft.AspNetCore.SpaProxy" />
+  </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="OnlineShopping.UnitTests" />
     <InternalsVisibleTo Include="OnlineShopping.IntegrationTests" />
