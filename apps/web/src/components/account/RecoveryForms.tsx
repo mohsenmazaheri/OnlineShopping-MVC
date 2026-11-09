@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { PASSWORD_MIN_LENGTH } from "@/lib/account/password";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { postJson } from "@/lib/account/client";
 import { problemMessage } from "@/lib/account/problems";
 import { FormAlert, FormField, SubmitButton } from "./FormParts";
+import { PasswordField } from "./PasswordField";
 import { useApiForm } from "./useApiForm";
 
 type Texts = Dictionary["account"];
@@ -61,15 +63,16 @@ export function ResetPasswordForm({ locale, texts, userId, token }: { locale: st
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
       {formError && <FormAlert kind="error">{formError}</FormAlert>}
-      <FormField
+      <PasswordField
         label={texts.newPassword}
         name="newPassword"
-        type="password"
         autoComplete="new-password"
         required
-        minLength={12}
+        minLength={PASSWORD_MIN_LENGTH}
         hint={texts.passwordHint}
         error={fieldError("newPassword")}
+        showLabel={texts.showPassword}
+        hideLabel={texts.hidePassword}
       />
       <SubmitButton busy={busy} label={texts.submitReset} busyLabel={texts.working} />
     </form>

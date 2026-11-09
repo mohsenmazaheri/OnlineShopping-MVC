@@ -22,13 +22,14 @@ public sealed class DependencyInjectionTests
     }
 
     [Fact]
-    public void Password_policy_requires_twelve_characters_and_locks_out_after_five_failures()
+    public void Password_policy_requires_eight_characters_and_locks_out_after_five_failures()
     {
         using var services = Build(withConnectionString: true);
 
         var identity = services.GetRequiredService<IOptions<IdentityOptions>>().Value;
 
-        Assert.Equal(12, identity.Password.RequiredLength);
+        Assert.Equal(8, identity.Password.RequiredLength);
+        Assert.True(identity.Password.RequireDigit);
         // Email OR phone: uniqueness is enforced by AppUserValidator and unique indexes instead.
         Assert.False(identity.User.RequireUniqueEmail);
         Assert.True(identity.Lockout.AllowedForNewUsers);

@@ -53,7 +53,9 @@ public static class AccountErrors
 /// <summary>Password rules shared by registration and reset (Identity enforces the same rules again).</summary>
 public static class PasswordRules
 {
-    public const int MinLength = 12;
+    // 8 is NIST SP 800-63B's floor. Brute force is held back by lockout (5 attempts), the auth rate limit and
+    // optional two-step sign-in; the hint still recommends a longer passphrase.
+    public const int MinLength = 8;
 
     // Long passphrases are welcome; the cap only prevents denial of service through huge hashing inputs.
     public const int MaxLength = 128;

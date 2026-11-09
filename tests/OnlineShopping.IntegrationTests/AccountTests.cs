@@ -91,6 +91,16 @@ public sealed class AccountTests(ApiFactory factory) : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task An_eight_character_password_with_a_digit_is_accepted()
+    {
+        using var client = factory.CreateClient();
+
+        using var response = await client.PostAsJsonAsync("/api/v1/account/register", new RegisterRequest(NewEmail(), "abcdefg1", null, null));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Weak_passwords_get_a_validation_problem_with_error_codes()
     {
         using var client = factory.CreateClient();

@@ -34,7 +34,7 @@
     "newPassword": "New password",
     "displayName": "Name (optional)",
     "rememberMe": "Remember me",
-    "passwordHint": "At least 12 characters including a number. A short sentence you remember makes the best password.",
+    "passwordHint": "At least 8 characters including a number. Longer is safer: a short sentence you remember makes the best password.",
     "submitLogin": "Sign in",
     "submitRegister": "Create account",
     "submitForgot": "Send reset link",
@@ -66,7 +66,7 @@
       "email_invalid": "The email address is not valid.",
       "phone_invalid": "The mobile number is not valid.",
       "password_required": "Enter a password.",
-      "password_too_short": "The password needs at least 12 characters.",
+      "password_too_short": "The password needs at least 8 characters.",
       "password_too_long": "The password is too long.",
       "password_needs_digit": "The password needs at least one number.",
       "password_rejected": "This password cannot be used.",
@@ -200,6 +200,8 @@
     "deleteAccountConfirm": "I understand this cannot be undone",
     "deleteAccountPasswordless": "To confirm, you must have signed in within the last few minutes.",
     "deleteAccount": "Delete my account",
-    "signInAgain": "Sign in again"
+    "signInAgain": "Sign in again",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   }
 }

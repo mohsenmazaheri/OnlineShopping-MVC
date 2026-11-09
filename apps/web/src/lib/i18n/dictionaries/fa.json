@@ -34,7 +34,7 @@
     "newPassword": "رمز عبور جدید",
     "displayName": "نام (اختیاری)",
     "rememberMe": "مرا به خاطر بسپار",
-    "passwordHint": "حداقل ۱۲ کاراکتر و شامل یک عدد. یک جملهٔ کوتاه که به خاطر می‌سپارید بهترین رمز است.",
+    "passwordHint": "حداقل ۸ کاراکتر و شامل یک عدد. رمز طولانی‌تر امن‌تر است؛ یک جملهٔ کوتاه که به خاطر می‌سپارید بهترین رمز است.",
     "submitLogin": "ورود",
     "submitRegister": "ساخت حساب",
     "submitForgot": "ارسال پیوند بازیابی",
@@ -66,7 +66,7 @@
       "email_invalid": "ایمیل معتبر نیست.",
       "phone_invalid": "شمارهٔ موبایل معتبر نیست.",
       "password_required": "رمز عبور را وارد کنید.",
-      "password_too_short": "رمز عبور باید حداقل ۱۲ کاراکتر باشد.",
+      "password_too_short": "رمز عبور باید حداقل ۸ کاراکتر باشد.",
       "password_too_long": "رمز عبور خیلی طولانی است.",
       "password_needs_digit": "رمز عبور باید حداقل یک عدد داشته باشد.",
       "password_rejected": "این رمز عبور قابل قبول نیست.",
@@ -200,6 +200,8 @@
     "deleteAccountConfirm": "می‌دانم که این کار برگشت‌پذیر نیست",
     "deleteAccountPasswordless": "برای تأیید، باید در چند دقیقهٔ اخیر وارد شده باشید.",
     "deleteAccount": "حذف حساب من",
-    "signInAgain": "ورود دوباره"
+    "signInAgain": "ورود دوباره",
+    "showPassword": "نمایش رمز عبور",
+    "hidePassword": "پنهان کردن رمز عبور"
   }
 }

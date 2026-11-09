@@ -34,7 +34,7 @@
     "newPassword": "Neues Passwort",
     "displayName": "Name (optional)",
     "rememberMe": "Angemeldet bleiben",
-    "passwordHint": "Mindestens 12 Zeichen mit einer Zahl. Ein kurzer Satz, den Sie sich merken, ist das beste Passwort.",
+    "passwordHint": "Mindestens 8 Zeichen mit einer Zahl. Länger ist sicherer: Ein kurzer Satz, den Sie sich merken, ist das beste Passwort.",
     "submitLogin": "Anmelden",
     "submitRegister": "Konto erstellen",
     "submitForgot": "Link senden",
@@ -66,7 +66,7 @@
       "email_invalid": "Die E-Mail-Adresse ist ungültig.",
       "phone_invalid": "Die Handynummer ist ungültig.",
       "password_required": "Geben Sie ein Passwort ein.",
-      "password_too_short": "Das Passwort braucht mindestens 12 Zeichen.",
+      "password_too_short": "Das Passwort braucht mindestens 8 Zeichen.",
       "password_too_long": "Das Passwort ist zu lang.",
       "password_needs_digit": "Das Passwort braucht mindestens eine Zahl.",
       "password_rejected": "Dieses Passwort kann nicht verwendet werden.",
@@ -200,6 +200,8 @@
     "deleteAccountConfirm": "Mir ist klar, dass dies nicht rückgängig gemacht werden kann",
     "deleteAccountPasswordless": "Zur Bestätigung müssen Sie sich in den letzten Minuten angemeldet haben.",
     "deleteAccount": "Mein Konto löschen",
-    "signInAgain": "Erneut anmelden"
+    "signInAgain": "Erneut anmelden",
+    "showPassword": "Passwort anzeigen",
+    "hidePassword": "Passwort verbergen"
   }
 }

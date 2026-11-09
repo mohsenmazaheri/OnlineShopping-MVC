@@ -49,6 +49,17 @@ public sealed class AccountValidatorsTests
         Assert.Contains(code, Codes(result));
     }
 
+    [Theory]
+    [InlineData("abcdef1", false)]
+    [InlineData("abcdefg1", true)]
+    public void Eight_characters_with_a_digit_is_the_minimum(string password, bool valid)
+    {
+        var result = new RegisterRequestValidator().Validate(new RegisterRequest("ali@example.com", password, null, null));
+
+        Assert.Equal(valid, !Codes(result).Contains(AccountErrors.PasswordTooShort));
+        Assert.Equal(8, PasswordRules.MinLength);
+    }
+
     [Fact]
     public void Absurdly_long_passwords_are_rejected()
     {

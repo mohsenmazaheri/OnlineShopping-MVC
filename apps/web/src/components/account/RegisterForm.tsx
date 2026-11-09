@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
+import { PASSWORD_MIN_LENGTH } from "@/lib/account/password";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { FormAlert, FormField, SubmitButton } from "./FormParts";
+import { PasswordField } from "./PasswordField";
 import { useApiForm } from "./useApiForm";
 
 type Props = { locale: string; texts: Dictionary["account"] };
@@ -35,15 +37,16 @@ export function RegisterForm({ locale, texts }: Props) {
       {formError && <FormAlert kind="error">{formError}</FormAlert>}
       <FormField label={texts.displayName} name="displayName" autoComplete="name" maxLength={100} error={fieldError("displayName")} />
       <FormField label={texts.email} name="email" type="email" autoComplete="email" dir="ltr" required error={fieldError("email")} />
-      <FormField
+      <PasswordField
         label={texts.password}
         name="password"
-        type="password"
         autoComplete="new-password"
         required
-        minLength={12}
+        minLength={PASSWORD_MIN_LENGTH}
         hint={texts.passwordHint}
         error={fieldError("password")}
+        showLabel={texts.showPassword}
+        hideLabel={texts.hidePassword}
       />
       <SubmitButton busy={busy} label={texts.submitRegister} busyLabel={texts.working} />
       <p className="text-sm">

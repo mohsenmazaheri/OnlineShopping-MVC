@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { postJson } from "@/lib/account/client";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
-import { FormAlert, FormField } from "./FormParts";
+import { FormAlert } from "./FormParts";
+import { PasswordField } from "./PasswordField";
 import { useApiForm } from "./useApiForm";
 
 const REAUTHENTICATION_REQUIRED = "account.reauthentication_required";
@@ -49,7 +50,7 @@ export function DeleteAccountForm({ locale, texts, hasPassword }: Props) {
         </button>
       )}
       {hasPassword ? (
-        <FormField label={texts.password} name="password" type="password" autoComplete="current-password" required error={fieldError("password")} />
+        <PasswordField label={texts.password} name="password" autoComplete="current-password" required error={fieldError("password")} showLabel={texts.showPassword} hideLabel={texts.hidePassword} />
       ) : (
         <p className="text-sm">{texts.deleteAccountPasswordless}</p>
       )}
