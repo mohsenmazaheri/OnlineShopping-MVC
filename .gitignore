@@ -73,3 +73,9 @@ next-env.d.ts
 
 # Local API data (development emails)
 **/App_Data/
+
+# Claude Code per-machine settings (graphify hooks use absolute paths)
+.claude/settings.local.json
+
+# graphify knowledge graph: generated locally (graphify extract/update), rebuilt by local git hooks
+graphify-out/

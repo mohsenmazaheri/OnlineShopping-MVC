@@ -1,0 +1,9 @@
+# Files graphify should not put in the knowledge graph (gitignore syntax; .gitignore is honoured too).
+# Generated code adds thousands of noisy nodes and no meaning.
+src/*/Migrations/*.Designer.cs
+src/*/Migrations/AppDbContextModelSnapshot.cs
+apps/web/src/lib/api/schema.d.ts
+apps/web/openapi/
+apps/web/next-env.d.ts
+# graphify's own output
+graphify-out/
